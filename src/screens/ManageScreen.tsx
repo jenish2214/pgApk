@@ -11,6 +11,7 @@ import ShopHeader from '../components/ShopHeader';
 import {listInquiries} from '../services/inquiryService';
 import {getDashboard, listOrders} from '../services/orderService';
 import {listRepairs} from '../services/repairService';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {deskAlerts, type DeskAlert} from '../utils/deskAlerts';
 import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
@@ -69,6 +70,7 @@ const EMPTY_COUNTS: Record<CountKey, number> = {
 type Props = NativeStackScreenProps<ShopStackParamList, 'ManageHome'>;
 
 export default function ManageScreen({navigation}: Props) {
+  const {t} = useLanguage();
   const [counts, setCounts] = useState(EMPTY_COUNTS);
   const [alert, setAlert] = useState<DeskAlert | null>(null);
   const [error, setError] = useState('');
@@ -117,10 +119,10 @@ export default function ManageScreen({navigation}: Props) {
       <View style={styles.screen}>
         <ShopHeader title="Manage" />
         <ScrollView contentContainerStyle={styles.content}>
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+          {error ? <Text style={styles.error}>{t(error)}</Text> : null}
           {alert ? (
             <View style={styles.block}>
-              <Text style={styles.section}>Attention</Text>
+              <Text style={styles.section}>{t('Attention')}</Text>
               <DeskAlertCard
                 tone={alert.tone}
                 title={alert.title}
@@ -129,7 +131,7 @@ export default function ManageScreen({navigation}: Props) {
               />
             </View>
           ) : null}
-          <Text style={styles.section}>Shop work</Text>
+          <Text style={styles.section}>{t('Shop work')}</Text>
           <View style={styles.panel}>
             {OPTIONS.map((option, index) => {
               const count = counts[option.key];
@@ -148,8 +150,8 @@ export default function ManageScreen({navigation}: Props) {
                     <TabIcon name={option.icon} color={colors.green} />
                   </View>
                   <View style={styles.copy}>
-                    <Text style={styles.title}>{option.title}</Text>
-                    <Text style={styles.detail}>{option.detail}</Text>
+                  <Text style={styles.title}>{t(option.title)}</Text>
+                  <Text style={styles.detail}>{t(option.detail)}</Text>
                   </View>
                   <Text style={count > 0 ? styles.count : styles.countQuiet}>{count}</Text>
                   <View style={styles.chevron} />

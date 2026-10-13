@@ -13,6 +13,7 @@ import {changeOrderStatus, listReady} from '../services/orderService';
 import {confirmAction, showNotice} from '../utils/confirm';
 import {formatDay, formatWhen} from '../utils/dates';
 import {buildReadyMessage, callCustomer, openWhatsApp} from '../utils/whatsappUtils';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {gap} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
@@ -20,6 +21,7 @@ import {padX, padY, spacing} from '../theme/spacing';
 type Props = NativeStackScreenProps<ShopStackParamList, 'ReadyHome'>;
 
 export default function ReadyOrdersScreen({navigation}: Props) {
+  const {t} = useLanguage();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(0);
@@ -106,7 +108,7 @@ export default function ReadyOrdersScreen({navigation}: Props) {
         keyExtractor={item => String(item.id)}
         contentContainerStyle={styles.list}
         ListHeaderComponent={
-          error ? <Text style={styles.error}>{error}</Text> : undefined
+          error ? <Text style={styles.error}>{t(error)}</Text> : undefined
         }
         ListEmptyComponent={
           loading ? (

@@ -1,6 +1,7 @@
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 import type {OrderStatus} from '../types';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {padY, spacing} from '../theme/spacing';
 import {important} from '../theme/type';
@@ -13,6 +14,7 @@ const STEPS: {status: OrderStatus; label: string}[] = [
 ];
 
 export default function OrderFlow({status}: {status: OrderStatus}) {
+  const {t} = useLanguage();
   const current = STEPS.findIndex(step => step.status === status);
   const cancelled = status === 'Cancelled';
 
@@ -30,12 +32,12 @@ export default function OrderFlow({status}: {status: OrderStatus}) {
               ) : null}
             </View>
             <Text style={[styles.label, reached && styles.labelOn, active && styles.labelActive]}>
-              {step.label}
+              {t(step.label)}
             </Text>
           </View>
         );
       })}
-      {cancelled ? <Text style={styles.cancelled}>Cancelled</Text> : null}
+      {cancelled ? <Text style={styles.cancelled}>{t('Cancelled')}</Text> : null}
     </View>
   );
 }

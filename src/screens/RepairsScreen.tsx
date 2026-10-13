@@ -13,6 +13,7 @@ import {listRepairs} from '../services/repairService';
 import {showNotice} from '../utils/confirm';
 import {formatDay} from '../utils/dates';
 import {callCustomer} from '../utils/whatsappUtils';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
@@ -21,6 +22,7 @@ import {important} from '../theme/type';
 type Props = NativeStackScreenProps<ShopStackParamList, 'RepairHome'>;
 
 export default function RepairsScreen({navigation}: Props) {
+  const {t} = useLanguage();
   const [query, setQuery] = useState('');
   const [repairs, setRepairs] = useState<Repair[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,7 +67,7 @@ export default function RepairsScreen({navigation}: Props) {
                 placeholder="Name, item, address, or kind"
                 autoCapitalize="none"
               />
-              {error ? <Text style={styles.error}>{error}</Text> : null}
+              {error ? <Text style={styles.error}>{t(error)}</Text> : null}
             </View>
           }
           ListEmptyComponent={
@@ -97,13 +99,15 @@ export default function RepairsScreen({navigation}: Props) {
                   ]
               ).map((piece, index) => (
                 <Text key={`${item.id}-${index}`} style={styles.item}>
-                  {piece.itemName} · {piece.repairKind} · {piece.metal}
+                  {piece.itemName} · {t(piece.repairKind)} · {t(piece.metal)}
                   {piece.weight ? ` · ${piece.weight} g` : ''}
                   {piece.details ? `\n${piece.details}` : ''}
                 </Text>
               ))}
-              <Text style={styles.meta}>{item.address || 'No data'}</Text>
-              <Text style={styles.meta}>Received {formatDay(item.receivedDate)}</Text>
+              <Text style={styles.meta}>{item.address || t('No data')}</Text>
+              <Text style={styles.meta}>
+                {t('Received {date}', {date: formatDay(item.receivedDate)})}
+              </Text>
               {item.phone ? (
                 <Pressable
                   accessibilityRole="button"
@@ -116,7 +120,7 @@ export default function RepairsScreen({navigation}: Props) {
                     });
                   }}
                   style={styles.call}>
-                  <Text style={styles.callText}>Call</Text>
+                  <Text style={styles.callText}>{t('Call')}</Text>
                 </Pressable>
               ) : null}
             </Pressable>

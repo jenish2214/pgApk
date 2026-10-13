@@ -9,21 +9,35 @@ import type {
 } from '../types';
 import {errorMessage, isFieldValidationError} from '../types';
 import React, {useCallback, useEffect, useState} from 'react';
-import {ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import AppButton from '../components/AppButton';
 import AppInput from '../components/AppInput';
 import PlusButton from '../components/PlusButton';
+import PlusIcon from '../components/PlusIcon';
 import DateTimeField from '../components/DateTimeField';
 import EmptyState from '../components/EmptyState';
 import Screen from '../components/Screen';
 import {createCustomer, listCustomers} from '../services/customerService';
-import {createOrder, getOrder, saveOrder} from '../services/orderService';
+import {shopTagNumbers} from '../services/inquiryService';
+import {createOrder, getOrder, orderTagNumbers, saveOrder} from '../services/orderService';
 import {PRODUCT_CATEGORIES} from '../utils/categories';
 import {confirmAction} from '../utils/confirm';
 import {formatDay, todayISO} from '../utils/dates';
+import {captureShopPhoto, pickShopImage} from '../utils/pickImage';
+import {formatTagNumber, nextTagNumber} from '../utils/tags';
 import {hasFieldErrors, validateCustomer, validateOrder} from '../utils/validation';
 import {ORDER_STATUSES} from '../utils/orderStatus';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {gap, radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
@@ -43,14 +57,25 @@ const EMPTY: OrderInput = {
 };
 
 const EMPTY_PIECE: OrderPieceInput = {
+  tagNumber: '',
   itemName: '',
   category: 'Necklaces',
   description: '',
+  imageUri: '',
 };
+
+function suggestedTag(used: string[] = []): string {
+  try {
+    return nextTagNumber([...shopTagNumbers(), ...orderTagNumbers(), ...used]);
+  } catch {
+    return '1001';
+  }
+}
 
 type Props = NativeStackScreenProps<ShopStackParamList, 'AddEditOrder'>;
 
 export default function AddEditOrderScreen({navigation, route}: Props) {
+  const {t} = useLanguage();
   const orderId = route.params?.orderId;
   const [form, setForm] = useState<OrderInput>({
     ...EMPTY,
@@ -66,8 +91,9 @@ export default function AddEditOrderScreen({navigation, route}: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [pieces, setPieces] = useState<OrderPieceInput[]>([
-    {...EMPTY_PIECE, itemName: route.params?.itemName || ''},
+    {...EMPTY_PIECE, tagNumber: suggestedTag(), itemName: route.params?.itemName || ''},
   ]);
+  const [photoIndex, setPhotoIndex] = useState<number | null>(null);
   const [missing, setMissing] = useState(false);
   const [error, setError] = useState('');
 
@@ -107,16 +133,20 @@ export default function AddEditOrderScreen({navigation, route}: Props) {
       });
       setPieces(
         order.pieces.length
-          ? order.pieces.map(piece => ({
+          ?         order.pieces.map(piece => ({
+              tagNumber: formatTagNumber(piece.tagNumber),
               itemName: piece.itemName,
               category: piece.category,
               description: piece.description,
+              imageUri: piece.imageUri,
             }))
           : [
               {
+                tagNumber: suggestedTag(),
                 itemName: order.itemName,
                 category: order.category || 'Other',
                 description: order.description,
+                imageUri: '',
               },
             ],
       );
@@ -149,6 +179,23 @@ export default function AddEditOrderScreen({navigation, route}: Props) {
       ),
     );
     setFieldErrors(current => ({...current, itemName: undefined, category: undefined}));
+  };
+
+  const choosePhoto = async (source: 'camera' | 'library') => {
+    const index = photoIndex;
+    setPhotoIndex(null);
+    if (index === null) {
+      return;
+    }
+    try {
+      const uri = source === 'camera' ? await captureShopPhoto() : await pickShopImage();
+      if (uri) {
+        changePiece(index, {imageUri: uri});
+        setError('');
+      }
+    } catch (pickError: unknown) {
+      setError(errorMessage(pickError, 'The photo could not be added.'));
+    }
   };
 
   const askSave = () => {
@@ -185,7 +232,7 @@ export default function AddEditOrderScreen({navigation, route}: Props) {
         `Customer notes: ${customerNotes || 'not set'}`,
         ...pieces.map(
           (piece, index) =>
-            `Piece ${index + 1}: ${piece.category} · ${piece.itemName.trim() || 'unnamed'}`,
+            `Tag ${piece.tagNumber || '—'}: ${piece.category} · ${piece.itemName.trim() || 'unnamed'}`,
         ),
         `Ordered: ${formatDay(form.orderDate)}`,
         `Delivery: ${form.expectedDeliveryDate ? formatDay(form.expectedDeliveryDate) : 'not set'}`,
@@ -265,8 +312,8 @@ export default function AddEditOrderScreen({navigation, route}: Props) {
         style={styles.screen}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled">
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Text style={styles.label}>Customer</Text>
+        {error ? <Text style={styles.error}>{t(error)}</Text> : null}
+        <Text style={styles.label}>{t('Customer')}</Text>
         {addingCustomer ? (
           <View style={styles.newCustomer}>
             <AppInput
@@ -303,7 +350,7 @@ export default function AddEditOrderScreen({navigation, route}: Props) {
                 accessibilityRole="button"
                 onPress={() => setAddingCustomer(false)}
                 style={styles.addCustomer}>
-                <Text style={styles.addCustomerText}>Choose an existing customer</Text>
+                <Text style={styles.addCustomerText}>{t('Choose an existing customer')}</Text>
               </Pressable>
             ) : null}
           </View>
@@ -318,7 +365,7 @@ export default function AddEditOrderScreen({navigation, route}: Props) {
               autoCapitalize="none"
             />
             {customerTerm && visibleCustomers.length === 0 ? (
-              <Text style={styles.customerHint}>No customer matches that name or phone.</Text>
+              <Text style={styles.customerHint}>{t('No customer matches that name or phone.')}</Text>
             ) : null}
             {visibleCustomers.map(customer => {
               const selected = form.customerId === customer.id;
@@ -349,17 +396,48 @@ export default function AddEditOrderScreen({navigation, route}: Props) {
           </View>
         )}
         <View style={styles.sectionRow}>
-          <Text style={styles.label}>Jewellery items</Text>
+          <Text style={styles.label}>{t('Jewellery items')}</Text>
           <PlusButton
             label="Item"
-            onPress={() => setPieces(current => [...current, {...EMPTY_PIECE, category: 'Earrings'}])}
+            onPress={() =>
+              setPieces(current => [
+                ...current,
+                {
+                  ...EMPTY_PIECE,
+                  tagNumber: suggestedTag(current.map(piece => piece.tagNumber)),
+                  category: 'Earrings',
+                },
+              ])
+            }
           />
         </View>
-        {fieldErrors.itemName ? <Text style={styles.error}>{fieldErrors.itemName}</Text> : null}
-        {fieldErrors.category ? <Text style={styles.error}>{fieldErrors.category}</Text> : null}
+        {fieldErrors.itemName ? <Text style={styles.error}>{t(fieldErrors.itemName)}</Text> : null}
+        {fieldErrors.category ? <Text style={styles.error}>{t(fieldErrors.category)}</Text> : null}
         {pieces.map((piece, index) => (
           <View key={`piece-${index}`} style={styles.piece}>
-            <Text style={styles.pieceTitle}>Piece {index + 1}</Text>
+            <Text style={styles.pieceTitle}>{t('Piece {number}', {number: index + 1})}</Text>
+            <View style={styles.pieceTop}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Add photo"
+                onPress={() => setPhotoIndex(index)}
+                style={styles.photo}>
+                {piece.imageUri ? (
+                  <Image source={{uri: piece.imageUri}} style={styles.photoImage} />
+                ) : (
+                  <PlusIcon color={colors.green} />
+                )}
+              </Pressable>
+              <View style={styles.pieceTag}>
+                <AppInput
+                  label="Tag number"
+                  value={piece.tagNumber}
+                  onChangeText={value => changePiece(index, {tagNumber: formatTagNumber(value)})}
+                  autoCapitalize="characters"
+                  placeholder="A1001"
+                />
+              </View>
+            </View>
             <View style={styles.statuses}>
               {PRODUCT_CATEGORIES.map(item => {
                 const selected = piece.category === item;
@@ -369,7 +447,7 @@ export default function AddEditOrderScreen({navigation, route}: Props) {
                     onPress={() => changePiece(index, {category: item})}
                     style={[styles.chip, selected && styles.chipSelected]}>
                     <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-                      {item}
+                      {t(item)}
                     </Text>
                   </Pressable>
                 );
@@ -394,7 +472,7 @@ export default function AddEditOrderScreen({navigation, route}: Props) {
                 onPress={() =>
                   setPieces(current => current.filter((_, pieceIndex) => pieceIndex !== index))
                 }>
-                <Text style={styles.removePiece}>Delete this piece</Text>
+                <Text style={styles.removePiece}>{t('Delete this piece')}</Text>
               </Pressable>
             ) : null}
           </View>
@@ -413,7 +491,7 @@ export default function AddEditOrderScreen({navigation, route}: Props) {
           placeholder="Optional date"
           optional
         />
-        <Text style={styles.label}>Status</Text>
+        <Text style={styles.label}>{t('Status')}</Text>
         <View style={styles.statuses}>
           {ORDER_STATUSES.map(status => {
             const selected = form.status === status;
@@ -426,15 +504,15 @@ export default function AddEditOrderScreen({navigation, route}: Props) {
                   selected && styles.chipSelected,
                   fieldErrors.status ? styles.chipError : null,
                 ]}>
-                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-                  {status}
-                </Text>
+              <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+                {t(status)}
+              </Text>
               </Pressable>
             );
           })}
         </View>
         {fieldErrors.status ? (
-          <Text style={styles.error}>{fieldErrors.status}</Text>
+          <Text style={styles.error}>{t(fieldErrors.status)}</Text>
         ) : null}
         <AppInput
           label="Employee notes"
@@ -449,6 +527,27 @@ export default function AddEditOrderScreen({navigation, route}: Props) {
           disabled={saving}
         />
       </ScrollView>
+      <Modal
+        visible={photoIndex !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPhotoIndex(null)}>
+        <Pressable style={styles.backdrop} onPress={() => setPhotoIndex(null)}>
+          <Pressable style={styles.sheet} onPress={() => undefined}>
+            <Text style={styles.sheetTitle}>{t('Jewellery photo')}</Text>
+            <Text style={styles.sheetNote}>
+              {t('The camera is used only to photograph this order.')}
+            </Text>
+            <AppButton label="Take photo" onPress={() => choosePhoto('camera')} />
+            <AppButton
+              label="Photo library"
+              variant="secondary"
+              onPress={() => choosePhoto('library')}
+              style={styles.sheetSecond}
+            />
+          </Pressable>
+        </Pressable>
+      </Modal>
     </Screen>
   );
 }
@@ -573,6 +672,54 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: important,
     marginBottom: spacing.sm,
+  },
+  pieceTop: {
+    flexDirection: 'row',
+    gap: padY,
+  },
+  pieceTag: {
+    flex: 1,
+  },
+  photo: {
+    alignItems: 'center',
+    backgroundColor: colors.ivory,
+    borderColor: colors.line,
+    borderRadius: radius,
+    borderWidth: 1,
+    height: 72,
+    justifyContent: 'center',
+    overflow: 'hidden',
+    width: 72,
+  },
+  photoImage: {
+    height: 72,
+    width: 72,
+  },
+  backdrop: {
+    backgroundColor: 'rgba(15, 58, 46, 0.45)',
+    flex: 1,
+    justifyContent: 'flex-end',
+    padding: padX,
+  },
+  sheet: {
+    backgroundColor: colors.white,
+    borderRadius: radius,
+    marginBottom: spacing.lg,
+    padding: padX,
+  },
+  sheetTitle: {
+    color: colors.ink,
+    fontSize: 18,
+    fontWeight: important,
+  },
+  sheetNote: {
+    color: colors.muted,
+    fontSize: 14,
+    marginBottom: padY,
+    marginTop: spacing.xs,
+  },
+  sheetSecond: {
+    marginTop: gap,
   },
   removePiece: {
     color: colors.danger,

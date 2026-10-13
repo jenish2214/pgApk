@@ -16,6 +16,7 @@ import {listInquiries} from '../services/inquiryService';
 import {changeOrderStatus, getDashboard, listOrders} from '../services/orderService';
 import {deskAlerts, ordersToUpdate, type DeskAlert} from '../utils/deskAlerts';
 import {confirmAction} from '../utils/confirm';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {timeGreeting} from '../utils/greeting';
 import {nextOrderStatus, nextStatusLabel} from '../utils/orderStatus';
 import {colors} from '../theme/colors';
@@ -43,6 +44,7 @@ type Props = CompositeScreenProps<
 >;
 
 export default function DashboardScreen({navigation}: Props) {
+  const {t} = useLanguage();
   const [counts, setCounts] = useState({
     customers: 0,
     pending: 0,
@@ -141,12 +143,12 @@ export default function DashboardScreen({navigation}: Props) {
         <ShopHeader title="Home" />
         <ScrollView contentContainerStyle={styles.content}>
           {loading ? <ActivityIndicator color={colors.gold} /> : null}
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+          {error ? <Text style={styles.error}>{t(error)}</Text> : null}
           <DeskHero
-            kicker={timeGreeting()}
+            kicker={t(timeGreeting())}
             value={String(openCount)}
-            label="Open on the desk"
-            notes={[`${counts.pending} pending`, `${counts.ready} ready`]}
+            label={t('Open on the desk')}
+            notes={[`${counts.pending} ${t('pending')}`, `${counts.ready} ${t('ready')}`]}
           />
           <View style={styles.metricRow}>
             {TILES.slice(0, 2).map(tile => (
@@ -156,7 +158,7 @@ export default function DashboardScreen({navigation}: Props) {
                 onPress={() => openTile(tile)}
                 style={styles.tile}>
                 <Text style={styles.count}>{counts[tile.key]}</Text>
-                <Text style={styles.tileLabel}>{tile.label}</Text>
+                <Text style={styles.tileLabel}>{t(tile.label)}</Text>
               </Pressable>
             ))}
           </View>
@@ -168,16 +170,16 @@ export default function DashboardScreen({navigation}: Props) {
                 onPress={() => openTile(tile)}
                 style={styles.tile}>
                 <Text style={styles.count}>{counts[tile.key]}</Text>
-                <Text style={styles.tileLabel}>{tile.label}</Text>
+                <Text style={styles.tileLabel}>{t(tile.label)}</Text>
               </Pressable>
             ))}
           </View>
           <View style={styles.sectionRow}>
-            <Text style={styles.section}>Needs attention</Text>
+            <Text style={styles.section}>{t('Needs attention')}</Text>
             <PlusButton label="Order" onPress={() => navigation.navigate('AddEditOrder')} />
           </View>
           {alerts.length === 0 && !loading ? (
-            <Text style={styles.empty}>Nothing needs a call today.</Text>
+            <Text style={styles.empty}>{t('Nothing needs a call today.')}</Text>
           ) : null}
           {alerts.map(alert => (
             <DeskAlertCard
@@ -188,7 +190,7 @@ export default function DashboardScreen({navigation}: Props) {
               onPress={() => openAlert(alert)}
             />
           ))}
-          {updates.length > 0 ? <Text style={styles.section}>Update an order</Text> : null}
+          {updates.length > 0 ? <Text style={styles.section}>{t('Update an order')}</Text> : null}
           {updates.map(order => (
             <OrderCard
               key={order.id}
@@ -200,7 +202,7 @@ export default function DashboardScreen({navigation}: Props) {
                 onPress={() => updateOrder(order)}
                 style={styles.update}>
                 <Text style={styles.updateText}>
-                  {savingId === order.id ? 'Updating…' : nextStatusLabel(order.status)}
+                  {savingId === order.id ? t('Updating…') : t(nextStatusLabel(order.status))}
                 </Text>
               </Pressable>
             </OrderCard>

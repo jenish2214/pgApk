@@ -7,6 +7,7 @@ import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
 import {important} from '../theme/type';
+import {useLanguage} from '../i18n/LanguageProvider';
 import StatusBadge from './StatusBadge';
 
 export default function OrderCard({
@@ -20,6 +21,7 @@ export default function OrderCard({
   meta?: string;
   children?: ReactNode;
 }) {
+  const {t} = useLanguage();
   return (
     <Pressable
       accessibilityRole="button"
@@ -33,12 +35,14 @@ export default function OrderCard({
             <StatusBadge status={order.status} />
           </View>
           <Text style={styles.item}>{order.itemName}</Text>
-          <Text style={styles.category}>{order.category || 'Other'}</Text>
+          <Text style={styles.category}>{t(order.category || 'Other')}</Text>
           <Text style={styles.customer}>
-            {order.customerName || 'Customer'}
+            {order.customerName || t('Customer')}
             {order.customerPhone ? ` · ${order.customerPhone}` : ''}
           </Text>
-          <Text style={styles.meta}>{meta || `Ordered ${formatDay(order.orderDate)}`}</Text>
+          <Text style={styles.meta}>
+            {meta || t('Ordered {date}', {date: formatDay(order.orderDate)})}
+          </Text>
         </View>
       </View>
       {children ? <View style={styles.actions}>{children}</View> : null}

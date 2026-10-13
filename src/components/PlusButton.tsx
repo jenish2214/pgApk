@@ -1,5 +1,6 @@
 import React from 'react';
 import {Pressable, StyleSheet, Text, type StyleProp, type ViewStyle} from 'react-native';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
@@ -21,11 +22,13 @@ export default function PlusButton({
   tone = 'green',
   style,
 }: Props) {
+  const {t} = useLanguage();
   const ink = tone === 'gold' ? colors.greenDeep : colors.cream;
+  const name = t(label);
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={name}
       onPress={onPress}
       style={[
         styles.button,
@@ -35,7 +38,7 @@ export default function PlusButton({
       ]}>
       <PlusIcon color={ink} size={floating ? 18 : 16} />
       <Text style={[styles.label, {color: ink}]} numberOfLines={1}>
-        {label}
+        {name}
       </Text>
     </Pressable>
   );

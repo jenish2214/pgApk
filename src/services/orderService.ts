@@ -8,6 +8,7 @@ import {
   insertOrderEvent,
   listOrderEvents,
   listReadyOrders,
+  listOrderTagNumbers,
   nextOrderNumber,
   replacePieces,
   searchOrders,
@@ -16,6 +17,7 @@ import {
 import type {Order, OrderEvent, OrderInput, OrderPieceInput, OrderStatus} from '../types';
 import {isProductCategory} from '../utils/categories';
 import {nowISO} from '../utils/dates';
+import {formatTagNumber} from '../utils/tags';
 import {isOrderStatus, READY_STATUS} from '../utils/orderStatus';
 import {notifyShopChanged} from './shopEvents';
 import {
@@ -36,16 +38,24 @@ function normalizePieces(input: OrderInput): OrderPieceInput[] {
     ? input.pieces
     : [
         {
+          tagNumber: '',
           itemName: input.itemName,
           category: input.category,
           description: input.description,
+          imageUri: '',
         },
       ];
   return source.map(piece => ({
+    tagNumber: formatTagNumber(piece.tagNumber),
     itemName: String(piece.itemName || '').trim(),
     category: isProductCategory(piece.category) ? piece.category : 'Other',
     description: String(piece.description || '').trim(),
+    imageUri: String(piece.imageUri || '').trim(),
   }));
+}
+
+export function orderTagNumbers(): string[] {
+  return listOrderTagNumbers(getDatabase());
 }
 
 function summarizePieces(pieces: OrderPieceInput[]): {

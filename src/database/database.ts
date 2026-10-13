@@ -48,9 +48,13 @@ export function hasFinishedOnboarding(): boolean {
 }
 
 export function finishOnboarding(): void {
+  setMeta('onboarding_complete', '1');
+}
+
+export function setMeta(key: string, value: string): void {
   getDatabase().execute(
     `INSERT INTO app_meta (key, value) VALUES (?, ?)
      ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-    ['onboarding_complete', '1'],
+    [key, value],
   );
 }

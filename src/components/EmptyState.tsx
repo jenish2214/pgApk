@@ -1,5 +1,6 @@
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {padX, padY, spacing} from '../theme/spacing';
 import {important} from '../theme/type';
@@ -16,10 +17,11 @@ export default function EmptyState({
   actionLabel?: string;
   onAction?: () => void;
 }) {
+  const {t} = useLanguage();
   return (
     <View style={styles.wrap}>
-      <Text style={styles.title}>{title}</Text>
-      {message ? <Text style={styles.message}>{message}</Text> : null}
+      <Text style={styles.title}>{t(title)}</Text>
+      {message ? <Text style={styles.message}>{t(message)}</Text> : null}
       {actionLabel && onAction ? (
         <AppButton label={actionLabel} onPress={onAction} style={styles.button} />
       ) : null}

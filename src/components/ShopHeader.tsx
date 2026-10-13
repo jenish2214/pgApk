@@ -1,7 +1,9 @@
 import React from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useLanguage} from '../i18n/LanguageProvider';
 import BackIcon from './BackIcon';
+import LanguageButton from './LanguageButton';
 import {colors} from '../theme/colors';
 import {padX, padY, spacing} from '../theme/spacing';
 import {important} from '../theme/type';
@@ -14,6 +16,7 @@ export default function ShopHeader({
   onBack?: () => void;
 }) {
   const insets = useSafeAreaInsets();
+  const {t} = useLanguage();
 
   return (
     <View style={[styles.header, {paddingTop: insets.top + padY}]}>
@@ -21,14 +24,15 @@ export default function ShopHeader({
         {onBack ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Back"
+            accessibilityLabel={t('Back')}
             onPress={onBack}
             hitSlop={6}
             style={styles.back}>
             <BackIcon color={colors.cream} />
           </Pressable>
         ) : null}
-        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.title}>{t(title)}</Text>
+        <LanguageButton />
       </View>
     </View>
   );

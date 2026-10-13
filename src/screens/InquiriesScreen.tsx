@@ -14,6 +14,7 @@ import {showNotice} from '../utils/confirm';
 import {callCustomer} from '../utils/whatsappUtils';
 import {categoryImage} from '../utils/categories';
 import {formatDay} from '../utils/dates';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
@@ -28,6 +29,7 @@ const STATUS_LABEL = {
 type Props = NativeStackScreenProps<ShopStackParamList, 'InquiryHome'>;
 
 export default function InquiriesScreen({navigation}: Props) {
+  const {t} = useLanguage();
   const [query, setQuery] = useState('');
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,7 +74,7 @@ export default function InquiriesScreen({navigation}: Props) {
               placeholder="Name, phone, or jewellery"
               autoCapitalize="none"
             />
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            {error ? <Text style={styles.error}>{t(error)}</Text> : null}
           </View>
         }
         ListEmptyComponent={
@@ -101,14 +103,16 @@ export default function InquiriesScreen({navigation}: Props) {
               <View style={styles.copy}>
                 <View style={styles.row}>
                   <Text style={styles.name}>{item.customerName}</Text>
-                  <Text style={styles.status}>{STATUS_LABEL[item.status]}</Text>
+                  <Text style={styles.status}>{t(STATUS_LABEL[item.status])}</Text>
                 </View>
                 <Text style={styles.item}>{item.itemName}</Text>
                 <Text style={styles.meta}>
-                  {tags ? `Tag ${tags}` : 'No tag'}
+                  {tags ? t('Tag {tag}', {tag: tags}) : t('No tag')}
                   {item.phone ? `  ·  ${item.phone}` : ''}
                 </Text>
-                <Text style={styles.meta}>Follow-up {formatDay(item.followUpDate)}</Text>
+                <Text style={styles.meta}>
+                  {t('Follow-up {date}', {date: formatDay(item.followUpDate)})}
+                </Text>
                 {item.phone ? (
                   <Pressable
                     accessibilityRole="button"
@@ -121,7 +125,7 @@ export default function InquiriesScreen({navigation}: Props) {
                       });
                     }}
                     style={styles.call}>
-                    <Text style={styles.callText}>Call</Text>
+                    <Text style={styles.callText}>{t('Call')}</Text>
                   </Pressable>
                 ) : null}
               </View>

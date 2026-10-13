@@ -3,7 +3,7 @@ import {dayReason, marksByDay, monthGrid, ordersOnDay} from '../src/utils/calend
 import {customerHistory} from '../src/utils/customerHistory';
 import {deskAlerts} from '../src/utils/deskAlerts';
 import {employeeAlerts} from '../src/utils/orderAlerts';
-import {nextReminderAt, orderReminderCopy} from '../src/utils/orderReminder';
+import {nextReminderAt, orderReminderCopy, reminderFireDay} from '../src/utils/orderReminder';
 import {homeKicker, timeGreeting} from '../src/utils/greeting';
 import {formatRupees} from '../src/utils/money';
 import {formatOrderNumber, nextSequence} from '../src/utils/orderNumbers';
@@ -115,6 +115,8 @@ test('builds a 9:00 reminder for ready and due orders', () => {
   expect(next.getDate()).toBe(9);
   const after = nextReminderAt(new Date(2026, 9, 9, 9, 0));
   expect(after.getDate()).toBe(10);
+  expect(reminderFireDay(new Date(2026, 9, 9, 8, 15))).toBe('2026-10-09');
+  expect(reminderFireDay(new Date(2026, 9, 9, 10, 0))).toBe('2026-10-10');
 
   const copy = orderReminderCopy(
     [
@@ -135,7 +137,7 @@ test('builds a 9:00 reminder for ready and due orders', () => {
     '2026-10-09',
   );
   expect(copy).toEqual({
-    title: '9:00 order reminder',
+    title: 'Order warning',
     body: 'Ready: Anita Shah, 9876543210, PG-2026-0001 · Necklace\nDue: Raj Patel, 9876543210, PG-2026-0001 · Bangles',
   });
   expect(orderReminderCopy([sampleOrder({expectedDeliveryDate: '2026-10-20'})], '2026-10-09')).toBe(

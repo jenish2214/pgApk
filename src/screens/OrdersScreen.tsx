@@ -20,6 +20,7 @@ import {listOrders} from '../services/orderService';
 import {PRODUCT_CATEGORIES} from '../utils/categories';
 import {employeeAlerts, type EmployeeAlert} from '../utils/orderAlerts';
 import {ORDER_STATUSES} from '../utils/orderStatus';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {gap, radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
@@ -27,7 +28,40 @@ import {important} from '../theme/type';
 
 type Props = NativeStackScreenProps<ShopStackParamList, 'Orders'>;
 
+function alertDetail(
+  detail: string,
+  t: (source: string, values?: Record<string, string | number>) => string,
+): string {
+  const collect = detail.match(/^(.*) can collect (.*)\. (.*)$/);
+  if (collect) {
+    return t('{who} can collect {piece}. {number}', {
+      who: collect[1],
+      piece: collect[2],
+      number: collect[3],
+    });
+  }
+  const late = detail.match(/^(.*), (.*), was due (.*)\. (.*)$/);
+  if (late) {
+    return t('{who}, {piece}, was due {due}. {number}', {
+      who: late[1],
+      piece: late[2],
+      due: late[3],
+      number: late[4],
+    });
+  }
+  const due = detail.match(/^(.*), (.*), is expected today\. (.*)$/);
+  if (due) {
+    return t('{who}, {piece}, is expected today. {number}', {
+      who: due[1],
+      piece: due[2],
+      number: due[3],
+    });
+  }
+  return t(detail);
+}
+
 export default function OrdersScreen({navigation, route}: Props) {
+  const {t} = useLanguage();
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState(route.params?.status || '');
   const [category, setCategory] = useState('');
@@ -88,13 +122,13 @@ export default function OrdersScreen({navigation, route}: Props) {
                     onPress={() => setStatus(item)}
                     style={[styles.chip, selected && styles.chipSelected]}>
                     <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-                      {item || 'All'}
+                      {t(item || 'All')}
                     </Text>
                   </Pressable>
                 );
               })}
             </View>
-            <Text style={styles.filterLabel}>Category</Text>
+            <Text style={styles.filterLabel}>{t('Category')}</Text>
             <View style={styles.filters}>
               {['', ...PRODUCT_CATEGORIES].map(item => {
                 const selected = category === item;
@@ -104,7 +138,7 @@ export default function OrdersScreen({navigation, route}: Props) {
                     onPress={() => setCategory(item)}
                     style={[styles.chip, selected && styles.chipSelected]}>
                     <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-                      {item || 'All jewellery'}
+                      {t(item || 'All jewellery')}
                     </Text>
                   </Pressable>
                 );
@@ -116,11 +150,11 @@ export default function OrdersScreen({navigation, route}: Props) {
                 key={`${alert.orderId}-${alert.title}`}
                 onPress={() => navigation.navigate('OrderDetails', {orderId: alert.orderId})}
                 style={styles.alert}>
-                <Text style={styles.alertTitle}>{alert.title}</Text>
-                <Text style={styles.alertDetail}>{alert.detail}</Text>
+                <Text style={styles.alertTitle}>{t(alert.title)}</Text>
+                <Text style={styles.alertDetail}>{alertDetail(alert.detail, t)}</Text>
               </Pressable>
             ))}
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            {error ? <Text style={styles.error}>{t(error)}</Text> : null}
           </View>
         }
         ListEmptyComponent={

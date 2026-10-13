@@ -22,7 +22,49 @@ import {confirmAction, showNotice} from '../utils/confirm';
 import {formatDay} from '../utils/dates';
 import {buildShopMessage, callCustomer, openWhatsApp} from '../utils/whatsappUtils';
 import {categoryImage} from '../utils/categories';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
+
+function showHistoryLine(
+  line: string,
+  t: (source: string, values?: Record<string, string | number>) => string,
+): string {
+  const tagged = line.match(/^Tag (.*?) · (.*?) · (.*)$/);
+  if (tagged) {
+    return `${t('Tag {tag}', {tag: tagged[1]})} · ${t(tagged[2])} · ${tagged[3]}`;
+  }
+  if (line === 'Delivery not set' || line === 'Follow-up not set') {
+    return t(line);
+  }
+  const shortTag = line.match(/^Tag (.*?) · (.*)$/);
+  if (shortTag) {
+    return `${t('Tag {tag}', {tag: shortTag[1]})} · ${shortTag[2]}`;
+  }
+  if (line.startsWith('Delivery ')) {
+    return t('Delivery {date}', {date: line.slice('Delivery '.length)});
+  }
+  if (line.startsWith('Follow-up ')) {
+    return t('Follow-up {date}', {date: line.slice('Follow-up '.length)});
+  }
+  if (line.startsWith('Notes ')) {
+    return `${t('Notes')} ${line.slice('Notes '.length)}`;
+  }
+  if (line.startsWith('Inquiry · ')) {
+    return `${t('Inquiry')} · ${t(line.slice('Inquiry · '.length))}`;
+  }
+  if (line.startsWith('Repair · ')) {
+    return `${t('Repair')} · ${t(line.slice('Repair · '.length))}`;
+  }
+  const piece = line.match(/^(.+?) · (.+?) · (.+)$/);
+  if (piece) {
+    return `${piece[1]} · ${t(piece[2])} · ${t(piece[3])}`;
+  }
+  const simple = line.match(/^(.+?) · (.+)$/);
+  if (simple) {
+    return `${t(simple[1])} · ${simple[2]}`;
+  }
+  return t(line);
+}
 import {gap, radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
 import {important} from '../theme/type';
@@ -30,6 +72,7 @@ import {important} from '../theme/type';
 type Props = NativeStackScreenProps<ShopStackParamList, 'CustomerDetails'>;
 
 export default function CustomerDetailsScreen({navigation, route}: Props) {
+  const {t} = useLanguage();
   const customerId = route.params?.customerId;
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -145,14 +188,16 @@ export default function CustomerDetailsScreen({navigation, route}: Props) {
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Text style={styles.name}>{customer.name}</Text>
       <Text style={styles.phone}>{customer.phone}</Text>
-      <Text style={styles.meta}>Customer since {formatDay(customer.createdAt)}</Text>
+      <Text style={styles.meta}>
+        {t('Customer since {date}', {date: formatDay(customer.createdAt)})}
+      </Text>
       <View style={styles.infoCard}>
-        <Text style={styles.infoLabel}>Address</Text>
-        <Text style={styles.infoValue}>{customer.address || 'No data'}</Text>
+        <Text style={styles.infoLabel}>{t('Address')}</Text>
+        <Text style={styles.infoValue}>{customer.address || t('No data')}</Text>
       </View>
       <View style={styles.infoCard}>
-        <Text style={styles.infoLabel}>Notes</Text>
-        <Text style={styles.infoValue}>{customer.notes || 'No data'}</Text>
+        <Text style={styles.infoLabel}>{t('Notes')}</Text>
+        <Text style={styles.infoValue}>{customer.notes || t('No data')}</Text>
       </View>
       <View style={styles.row}>
         <AppButton
@@ -190,16 +235,16 @@ export default function CustomerDetailsScreen({navigation, route}: Props) {
           />
         </View>
       </View>
-      <Text style={styles.section}>History by date</Text>
+      <Text style={styles.section}>{t('History by date')}</Text>
       {history.length === 0 ? (
-        <Text style={styles.empty}>No data</Text>
+        <Text style={styles.empty}>{t('No data')}</Text>
       ) : (
         history.map((entry, index, rows) => {
           const showDay = index === 0 || rows[index - 1].day !== entry.day;
           return (
             <View key={entry.key}>
               {showDay ? (
-                <Text style={styles.day}>{formatDay(entry.day) || 'Date not set'}</Text>
+                <Text style={styles.day}>{formatDay(entry.day) || t('Date not set')}</Text>
               ) : null}
               <View style={styles.history}>
                 {entry.imageUri ? (
@@ -226,7 +271,7 @@ export default function CustomerDetailsScreen({navigation, route}: Props) {
                     <Text style={styles.historyTitle}>{entry.title}</Text>
                     {entry.lines.map(line => (
                       <Text key={line} style={styles.historyDetail}>
-                        {line}
+                        {showHistoryLine(line, t)}
                       </Text>
                     ))}
                   </Pressable>
@@ -235,7 +280,7 @@ export default function CustomerDetailsScreen({navigation, route}: Props) {
                       accessibilityRole="button"
                       onPress={() => contactPhone(entry.phone)}
                       style={styles.call}>
-                      <Text style={styles.callText}>Call</Text>
+                      <Text style={styles.callText}>{t('Call')}</Text>
                     </Pressable>
                   ) : null}
                 </View>

@@ -11,7 +11,9 @@ import {
 } from 'react-native';
 import type {ScrollViewInstance} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import LanguageButton from '../components/LanguageButton';
 import Screen from '../components/Screen';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
 import {fonts} from '../theme/type';
@@ -44,6 +46,7 @@ const PAGES = [
 ];
 
 export default function OnboardingScreen({onEnter}: {onEnter: () => void}) {
+  const {t} = useLanguage();
   const {width, height} = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const scrollX = useRef(new Animated.Value(0)).current;
@@ -78,13 +81,16 @@ export default function OnboardingScreen({onEnter}: {onEnter: () => void}) {
     <View style={styles.root}>
       <StatusBar barStyle="light-content" />
       <View style={[styles.brandWrap, {paddingTop: insets.top + 12}]}>
+        <View style={[styles.language, {top: insets.top + 8}]}>
+          <LanguageButton />
+        </View>
         <View style={styles.brand}>
           <View style={styles.mark}>
             <Text style={styles.markText}>P</Text>
           </View>
           <View>
             <Text style={styles.brandName}>Pragati Gold</Text>
-            <Text style={styles.brandLine}>FINE JEWELLERY HOUSE</Text>
+            <Text style={styles.brandLine}>{t('FINE JEWELLERY HOUSE')}</Text>
           </View>
         </View>
       </View>
@@ -135,19 +141,19 @@ export default function OnboardingScreen({onEnter}: {onEnter: () => void}) {
                       style={[styles.photo, {transform: [{translateX: shift}, {scale: 1.08}]}]}
                     />
                     <View style={styles.badge}>
-                      <Text style={styles.badgeText}>{item.badge}</Text>
+                      <Text style={styles.badgeText}>{t(item.badge)}</Text>
                     </View>
                   </View>
                   <Animated.View style={[styles.copy, {opacity}]}>
-                    <Text style={styles.kicker}>{item.kicker}</Text>
+                    <Text style={styles.kicker}>{t(item.kicker)}</Text>
                     <Text
                       style={[
                         styles.title,
                         {fontSize: titleSize, lineHeight: Math.round(titleSize * 1.12)},
                       ]}>
-                      {item.title}
+                      {t(item.title)}
                     </Text>
-                    <Text style={styles.body}>{item.body}</Text>
+                    <Text style={styles.body}>{t(item.body)}</Text>
                   </Animated.View>
                 </ScrollView>
               );
@@ -181,13 +187,15 @@ export default function OnboardingScreen({onEnter}: {onEnter: () => void}) {
             );
           })}
         </View>
-        <Text style={styles.step}>Step {page + 1} of {PAGES.length}</Text>
+        <Text style={styles.step}>
+          {t('Step {step} of {total}', {step: page + 1, total: PAGES.length})}
+        </Text>
         <Pressable
           accessibilityRole="button"
           onPress={() => (lastPage ? onEnter() : goToPage(page + 1))}
           style={({pressed}) => [styles.enter, pressed && styles.pressed]}>
           <Text style={styles.enterText}>
-            {lastPage ? 'Enter Pragati Gold' : 'Next'}
+            {lastPage ? t('Enter Pragati Gold') : t('Next')}
           </Text>
         </Pressable>
       </View>
@@ -204,6 +212,11 @@ const styles = StyleSheet.create({
   brandWrap: {
     alignItems: 'center',
     paddingBottom: 8,
+  },
+  language: {
+    position: 'absolute',
+    right: 16,
+    top: 8,
   },
   brand: {
     alignItems: 'center',

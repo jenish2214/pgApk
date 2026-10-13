@@ -10,6 +10,7 @@ import Screen from '../components/Screen';
 import {createCustomer, getCustomer, saveCustomer} from '../services/customerService';
 import {confirmAction} from '../utils/confirm';
 import {hasFieldErrors, validateCustomer} from '../utils/validation';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {padX, padY, spacing} from '../theme/spacing';
 
@@ -18,6 +19,7 @@ const EMPTY = {name: '', phone: '', address: '', notes: ''};
 type Props = NativeStackScreenProps<ShopStackParamList, 'AddEditCustomer'>;
 
 export default function AddEditCustomerScreen({navigation, route}: Props) {
+  const {t} = useLanguage();
   const customerId = route.params?.customerId;
   const [form, setForm] = useState<CustomerInput>(EMPTY);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -124,7 +126,7 @@ export default function AddEditCustomerScreen({navigation, route}: Props) {
         style={styles.screen}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled">
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? <Text style={styles.error}>{t(error)}</Text> : null}
         <AppInput
           label="Full name"
           value={form.name}

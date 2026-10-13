@@ -304,6 +304,15 @@ const MIGRATIONS = [
       );
     },
   },
+  {
+    version: 9,
+    up(tx: SqlExecutor) {
+      tx.execute(
+        `ALTER TABLE order_items ADD COLUMN tag_number TEXT NOT NULL DEFAULT ''`,
+      );
+      tx.execute('ALTER TABLE order_items ADD COLUMN image_uri TEXT');
+    },
+  },
 ];
 
 export async function migrate(db: NitroSQLiteConnection) {

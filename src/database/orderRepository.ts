@@ -135,10 +135,18 @@ function mapPiece(row: SqlRow): OrderPiece {
   return {
     id: Number(row.id),
     orderId: Number(row.order_id),
+    tagNumber: text(row.tag_number),
     itemName: text(row.item_name),
     category: text(row.category) || 'Other',
     description: text(row.description),
+    imageUri: row.image_uri ? String(row.image_uri) : '',
   };
+}
+
+export function listOrderTagNumbers(executor: SqlExecutor): string[] {
+  return rowsOf(executor.execute('SELECT tag_number FROM order_items')).map(row =>
+    text(row.tag_number),
+  );
 }
 
 export function listPieces(executor: SqlExecutor, orderId: number): OrderPiece[] {
@@ -160,13 +168,15 @@ export function replacePieces(
   pieces.forEach(piece => {
     executor.execute(
       `INSERT INTO order_items (
-         order_id, item_name, category, description, created_at, updated_at
-       ) VALUES (?, ?, ?, ?, ?, ?)`,
+         order_id, tag_number, item_name, category, description, image_uri, created_at, updated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         Number(orderId),
+        piece.tagNumber.trim(),
         piece.itemName,
         piece.category || 'Other',
         blankToNull(piece.description),
+        blankToNull(piece.imageUri),
         now,
         now,
       ],

@@ -15,6 +15,7 @@ import {createRepair, getRepair, saveRepair} from '../services/repairService';
 import {confirmAction} from '../utils/confirm';
 import {formatDay, todayISO} from '../utils/dates';
 import {hasFieldErrors, validateRepair} from '../utils/validation';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {gap, radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
@@ -45,6 +46,7 @@ const EMPTY_PIECE: RepairPieceInput = {
 type Props = NativeStackScreenProps<ShopStackParamList, 'AddEditRepair'>;
 
 export default function AddEditRepairScreen({navigation, route}: Props) {
+  const {t} = useLanguage();
   const repairId = route.params?.repairId;
   const [form, setForm] = useState<RepairInput>(EMPTY);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -225,7 +227,7 @@ export default function AddEditRepairScreen({navigation, route}: Props) {
         style={styles.screen}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled">
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? <Text style={styles.error}>{t(error)}</Text> : null}
         <AppInput
           label="Find customer"
           value={customerQuery}
@@ -274,17 +276,17 @@ export default function AddEditRepairScreen({navigation, route}: Props) {
           multiline
         />
         <View style={styles.sectionRow}>
-          <Text style={styles.label}>Jewellery items</Text>
+          <Text style={styles.label}>{t('Jewellery items')}</Text>
           <PlusButton
             label="Item"
             onPress={() => setPieces(current => [...current, {...EMPTY_PIECE}])}
           />
         </View>
-        {fieldErrors.itemName ? <Text style={styles.error}>{fieldErrors.itemName}</Text> : null}
-        {fieldErrors.weight ? <Text style={styles.error}>{fieldErrors.weight}</Text> : null}
+        {fieldErrors.itemName ? <Text style={styles.error}>{t(fieldErrors.itemName)}</Text> : null}
+        {fieldErrors.weight ? <Text style={styles.error}>{t(fieldErrors.weight)}</Text> : null}
         {pieces.map((piece, index) => (
           <View key={`piece-${index}`} style={styles.piece}>
-            <Text style={styles.pieceTitle}>Piece {index + 1}</Text>
+            <Text style={styles.pieceTitle}>{t('Piece {number}', {number: index + 1})}</Text>
             <AppInput
               label="Jewellery item"
               value={piece.itemName}
@@ -298,7 +300,7 @@ export default function AddEditRepairScreen({navigation, route}: Props) {
               keyboardType="decimal-pad"
               placeholder="12.50"
             />
-            <Text style={styles.label}>Metal</Text>
+            <Text style={styles.label}>{t('Metal')}</Text>
             <View style={styles.chips}>
               {REPAIR_METALS.map(metal => {
                 const selected = piece.metal === metal;
@@ -308,13 +310,13 @@ export default function AddEditRepairScreen({navigation, route}: Props) {
                     onPress={() => changePiece(index, {metal})}
                     style={[styles.chip, selected && styles.chipSelected]}>
                     <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-                      {metal}
+                      {t(metal)}
                     </Text>
                   </Pressable>
                 );
               })}
             </View>
-            <Text style={styles.label}>Kind of repair</Text>
+            <Text style={styles.label}>{t('Kind of repair')}</Text>
             <View style={styles.chips}>
               {REPAIR_KINDS.map(kind => {
                 const selected = piece.repairKind === kind;
@@ -324,7 +326,7 @@ export default function AddEditRepairScreen({navigation, route}: Props) {
                     onPress={() => changePiece(index, {repairKind: kind})}
                     style={[styles.chip, selected && styles.chipSelected]}>
                     <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-                      {kind}
+                      {t(kind)}
                     </Text>
                   </Pressable>
                 );
@@ -343,7 +345,7 @@ export default function AddEditRepairScreen({navigation, route}: Props) {
                 onPress={() =>
                   setPieces(current => current.filter((_, pieceIndex) => pieceIndex !== index))
                 }>
-                <Text style={styles.remove}>Delete this piece</Text>
+                <Text style={styles.remove}>{t('Delete this piece')}</Text>
               </Pressable>
             ) : null}
           </View>
@@ -354,7 +356,7 @@ export default function AddEditRepairScreen({navigation, route}: Props) {
           onChange={value => update('receivedDate', value)}
           error={fieldErrors.receivedDate}
         />
-        <Text style={styles.label}>Status</Text>
+        <Text style={styles.label}>{t('Status')}</Text>
         <View style={styles.chips}>
           {REPAIR_STATUSES.map(status => {
             const selected = form.status === status;
@@ -363,7 +365,7 @@ export default function AddEditRepairScreen({navigation, route}: Props) {
                 key={status}
                 onPress={() => update('status', status)}
                 style={[styles.chip, selected && styles.chipSelected]}>
-                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{status}</Text>
+                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{t(status)}</Text>
               </Pressable>
             );
           })}

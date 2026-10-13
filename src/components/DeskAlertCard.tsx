@@ -1,5 +1,6 @@
 import React from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
+import {useLanguage} from '../i18n/LanguageProvider';
 import type {DeskAlertTone} from '../utils/deskAlerts';
 import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
@@ -24,6 +25,11 @@ export default function DeskAlertCard({
   detail: string;
   onPress: () => void;
 }) {
+  const {t} = useLanguage();
+  const readyCount = title.match(/^(\d+) ready for collection$/);
+  const heading = readyCount
+    ? t('{count} ready for collection', {count: readyCount[1]})
+    : t(title);
   const paint = TONE[tone];
   return (
     <Pressable
@@ -32,8 +38,8 @@ export default function DeskAlertCard({
       style={[styles.card, {backgroundColor: paint.background}]}>
       <View style={[styles.bar, {backgroundColor: paint.bar}]} />
       <View style={styles.copy}>
-        <Text style={[styles.title, {color: paint.label}]}>{title}</Text>
-        <Text style={styles.detail}>{detail}</Text>
+        <Text style={[styles.title, {color: paint.label}]}>{heading}</Text>
+        <Text style={styles.detail}>{t(detail)}</Text>
       </View>
     </Pressable>
   );

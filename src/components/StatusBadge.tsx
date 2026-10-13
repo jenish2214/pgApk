@@ -1,6 +1,7 @@
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 import type {OrderStatus} from '../types';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
 import {spacing} from '../theme/spacing';
@@ -15,10 +16,11 @@ const TONES = {
 };
 
 export default function StatusBadge({status}: {status: OrderStatus | string}) {
+  const {t} = useLanguage();
   const tone = TONES[status as OrderStatus] || TONES.Pending;
   return (
     <View style={[styles.badge, {backgroundColor: tone.background}]}>
-      <Text style={[styles.text, {color: tone.text}]}>{status}</Text>
+      <Text style={[styles.text, {color: tone.text}]}>{t(status)}</Text>
     </View>
   );
 }

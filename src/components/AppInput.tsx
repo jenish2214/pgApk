@@ -1,5 +1,6 @@
 import React from 'react';
 import {StyleSheet, Text, TextInput, View, type TextInputProps} from 'react-native';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
 import {padY, spacing} from '../theme/spacing';
@@ -26,13 +27,14 @@ export default function AppInput({
   multiline = false,
   autoCapitalize = 'sentences',
 }: Props) {
+  const {t} = useLanguage();
   return (
     <View style={styles.wrap}>
-      <Text style={[styles.label, error ? styles.labelError : null]}>{label}</Text>
+      <Text style={[styles.label, error ? styles.labelError : null]}>{t(label)}</Text>
       <TextInput
         value={value}
         onChangeText={onChangeText}
-        placeholder={placeholder}
+        placeholder={placeholder ? t(placeholder) : undefined}
         placeholderTextColor={error ? colors.danger : colors.muted}
         keyboardType={keyboardType}
         multiline={multiline}
@@ -44,7 +46,7 @@ export default function AppInput({
           error ? styles.inputError : null,
         ]}
       />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? <Text style={styles.error}>{t(error)}</Text> : null}
     </View>
   );
 }

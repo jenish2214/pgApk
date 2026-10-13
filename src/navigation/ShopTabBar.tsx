@@ -111,7 +111,7 @@ export default function ShopTabBar({state, descriptors, navigation}: BottomTabBa
                 waiting > 0 ? `${label}, ${waiting} ready for collection` : label
               }
               onPress={onPress}
-              android_ripple={null}
+              android_ripple={{color: 'transparent'}}
               style={styles.button}>
               <View style={styles.iconWrap}>
                 <TabIcon name={tabName} color={tint} />

@@ -51,9 +51,16 @@ export function validateOrder(input: OrderInput): FieldErrors {
   }
   const pieces = input.pieces?.length
     ? input.pieces
-    : [{itemName: input.itemName, category: input.category}];
+    : [{tagNumber: '', itemName: input.itemName, category: input.category}];
   if (pieces.some(piece => !String(piece.itemName || '').trim())) {
     errors.itemName = 'Enter every jewellery item.';
+  } else if (pieces.some(piece => !formatTagNumber(piece.tagNumber || ''))) {
+    errors.itemName = 'Enter a tag number for every piece. Letters and digits are allowed.';
+  } else {
+    const tags = pieces.map(piece => formatTagNumber(piece.tagNumber || '')).filter(Boolean);
+    if (new Set(tags).size !== tags.length) {
+      errors.itemName = 'Each piece needs its own tag number.';
+    }
   }
   if (pieces.some(piece => !isProductCategory(piece.category))) {
     errors.category = 'Choose a category for every piece.';

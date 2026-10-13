@@ -16,6 +16,7 @@ import {confirmAction, showNotice} from '../utils/confirm';
 import {formatDay, formatWhen} from '../utils/dates';
 import {ORDER_STATUSES, READY_STATUS} from '../utils/orderStatus';
 import {buildReadyMessage, callCustomer, openWhatsApp} from '../utils/whatsappUtils';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {gap, radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
@@ -24,6 +25,7 @@ import {important} from '../theme/type';
 type Props = NativeStackScreenProps<ShopStackParamList, 'OrderDetails'>;
 
 export default function OrderDetailsScreen({navigation, route}: Props) {
+  const {t} = useLanguage();
   const orderId = route.params?.orderId;
   const [order, setOrder] = useState<Order | null>(null);
   const [events, setEvents] = useState<OrderEvent[]>([]);
@@ -147,24 +149,32 @@ export default function OrderDetailsScreen({navigation, route}: Props) {
         {
           id: 0,
           orderId: order.id,
+          tagNumber: '',
           itemName: order.itemName,
           category: order.category,
           description: order.description,
+          imageUri: '',
         },
       ];
 
   return (
     <Screen>
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.section}>Order flow</Text>
+      <Text style={styles.section}>{t('Order flow')}</Text>
       <OrderFlow status={order.status} />
-      <Text style={styles.section}>Jewellery</Text>
+      <Text style={styles.section}>{t('Jewellery')}</Text>
       {pieces.map(piece => (
         <View key={`${piece.id}-${piece.itemName}`} style={styles.piece}>
-          <Image source={categoryImage(piece.category)} style={styles.thumb} />
+          <Image
+            source={piece.imageUri ? {uri: piece.imageUri} : categoryImage(piece.category)}
+            style={styles.thumb}
+          />
           <View style={styles.pieceCopy}>
             <Text style={styles.pieceName}>{piece.itemName}</Text>
-            <Text style={styles.pieceCategory}>{piece.category}</Text>
+            {piece.tagNumber ? (
+              <Text style={styles.pieceCategory}>{t('Tag {tag}', {tag: piece.tagNumber})}</Text>
+            ) : null}
+            <Text style={styles.pieceCategory}>{t(piece.category)}</Text>
             {piece.description ? <Text style={styles.pieceNote}>{piece.description}</Text> : null}
           </View>
         </View>
@@ -179,7 +189,7 @@ export default function OrderDetailsScreen({navigation, route}: Props) {
       <Text style={styles.item}>{order.itemName}</Text>
       <Detail label="Category" value={order.category || 'Other'} />
       <StatusBadge status={order.status} />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? <Text style={styles.error}>{t(error)}</Text> : null}
       <Detail label="Customer" value={order.customerName || 'Customer record is missing'} />
       <Detail label="Phone" value={order.customerPhone || '—'} />
       <Detail label="Design" value={order.description || '—'} />
@@ -190,7 +200,7 @@ export default function OrderDetailsScreen({navigation, route}: Props) {
       />
       <Detail label="Marked ready" value={formatWhen(order.readyAt)} />
       <Detail label="Employee notes" value={order.employeeNotes || '—'} />
-      <Text style={styles.section}>Tracking</Text>
+      <Text style={styles.section}>{t('Tracking')}</Text>
       {events.map(event => (
         <View key={event.id} style={styles.event}>
           <Text style={styles.eventLabel}>{event.label}</Text>
@@ -198,7 +208,7 @@ export default function OrderDetailsScreen({navigation, route}: Props) {
           <Text style={styles.eventWhen}>{formatWhen(event.happenedAt)}</Text>
         </View>
       ))}
-      <Text style={styles.section}>Status</Text>
+      <Text style={styles.section}>{t('Status')}</Text>
       <View style={styles.statuses}>
         {ORDER_STATUSES.map(status => {
           const selected = order.status === status;
@@ -209,7 +219,7 @@ export default function OrderDetailsScreen({navigation, route}: Props) {
               onPress={() => confirmStatus(status)}
               style={[styles.chip, selected && styles.chipSelected]}>
               <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-                {status}
+                {t(status)}
               </Text>
             </Pressable>
           );
@@ -255,10 +265,11 @@ export default function OrderDetailsScreen({navigation, route}: Props) {
 }
 
 function Detail({label, value}: {label: string; value: string}) {
+  const {t} = useLanguage();
   return (
     <View style={styles.detail}>
-      <Text style={styles.detailLabel}>{label}</Text>
-      <Text style={styles.detailValue}>{value}</Text>
+      <Text style={styles.detailLabel}>{t(label)}</Text>
+      <Text style={styles.detailValue}>{t(value)}</Text>
     </View>
   );
 }

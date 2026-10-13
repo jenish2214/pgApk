@@ -34,6 +34,7 @@ import {formatTagNumber, nextTagNumber} from '../utils/tags';
 import {confirmAction} from '../utils/confirm';
 import {formatDay, tomorrowISO} from '../utils/dates';
 import {hasFieldErrors, validateInquiry} from '../utils/validation';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {gap, radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
@@ -64,6 +65,7 @@ const EMPTY: InquiryInput = {
 type Props = NativeStackScreenProps<ShopStackParamList, 'AddEditInquiry'>;
 
 export default function AddEditInquiryScreen({navigation, route}: Props) {
+  const {t} = useLanguage();
   const inquiryId = route.params?.inquiryId;
   const [form, setForm] = useState<InquiryInput>({
     ...EMPTY,
@@ -297,7 +299,7 @@ export default function AddEditInquiryScreen({navigation, route}: Props) {
         style={styles.screen}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled">
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? <Text style={styles.error}>{t(error)}</Text> : null}
         <AppInput
           label="Find customer"
           value={customerQuery}
@@ -306,7 +308,7 @@ export default function AddEditInquiryScreen({navigation, route}: Props) {
           autoCapitalize="none"
         />
         {term && matches.length === 0 ? (
-          <Text style={styles.hint}>No saved customer matches. Enter the name below.</Text>
+          <Text style={styles.hint}>{t('No saved customer matches. Enter the name below.')}</Text>
         ) : null}
         {matches.map(customer => (
           <Pressable
@@ -339,10 +341,10 @@ export default function AddEditInquiryScreen({navigation, route}: Props) {
           keyboardType="phone-pad"
         />
         <View style={styles.sectionRow}>
-          <Text style={styles.label}>Jewellery</Text>
+          <Text style={styles.label}>{t('Jewellery')}</Text>
           <PlusButton label="Item" onPress={addPiece} />
         </View>
-        {fieldErrors.itemName ? <Text style={styles.error}>{fieldErrors.itemName}</Text> : null}
+        {fieldErrors.itemName ? <Text style={styles.error}>{t(fieldErrors.itemName)}</Text> : null}
         {pieces.map((piece, index) => (
           <View key={`piece-${index}`} style={styles.piece}>
             <Pressable
@@ -376,7 +378,7 @@ export default function AddEditInquiryScreen({navigation, route}: Props) {
                   onPress={() =>
                     setPieces(current => current.filter((_, pieceIndex) => pieceIndex !== index))
                   }>
-                  <Text style={styles.remove}>Delete piece</Text>
+                  <Text style={styles.remove}>{t('Delete piece')}</Text>
                 </Pressable>
               ) : null}
             </View>
@@ -395,7 +397,7 @@ export default function AddEditInquiryScreen({navigation, route}: Props) {
           placeholder="Optional"
           multiline
         />
-        <Text style={styles.label}>Decision</Text>
+        <Text style={styles.label}>{t('Decision')}</Text>
         <View style={styles.statuses}>
           {INQUIRY_STATUSES.map(status => {
             const selected = form.status === status;
@@ -405,7 +407,7 @@ export default function AddEditInquiryScreen({navigation, route}: Props) {
                 onPress={() => update('status', status)}
                 style={[styles.chip, selected && styles.chipSelected]}>
                 <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-                  {STATUS_LABEL[status]}
+                  {t(STATUS_LABEL[status])}
                 </Text>
               </Pressable>
             );
@@ -453,9 +455,9 @@ export default function AddEditInquiryScreen({navigation, route}: Props) {
         onRequestClose={() => setPhotoIndex(null)}>
         <Pressable style={styles.backdrop} onPress={() => setPhotoIndex(null)}>
           <Pressable style={styles.sheet} onPress={() => undefined}>
-            <Text style={styles.sheetTitle}>Jewellery photo</Text>
+            <Text style={styles.sheetTitle}>{t('Jewellery photo')}</Text>
             <Text style={styles.sheetNote}>
-              The camera is used only to photograph this inquiry.
+              {t('The camera is used only to photograph this inquiry.')}
             </Text>
             <AppButton label="Take photo" onPress={() => choosePhoto('camera')} />
             <AppButton

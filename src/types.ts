@@ -36,15 +36,19 @@ export type CustomerInput = {
 export type OrderPiece = {
   id: number;
   orderId: number;
+  tagNumber: string;
   itemName: string;
   category: string;
   description: string;
+  imageUri: string;
 };
 
 export type OrderPieceInput = {
+  tagNumber: string;
   itemName: string;
   category: string;
   description?: string;
+  imageUri?: string;
 };
 
 export type Order = {

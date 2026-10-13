@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Modal, Pressable, StyleSheet, Text, View} from 'react-native';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {gap, radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
@@ -7,6 +8,7 @@ import {important} from '../theme/type';
 import {subscribeDialog, type DialogRequest} from '../utils/confirm';
 
 export default function DialogHost() {
+  const {t} = useLanguage();
   const [request, setRequest] = useState<DialogRequest | null>(null);
 
   useEffect(() => subscribeDialog(setRequest), []);
@@ -30,21 +32,30 @@ export default function DialogHost() {
         <Pressable style={styles.backdrop} onPress={close} accessibilityLabel="Close" />
         {request ? (
           <View style={styles.card}>
-            <Text style={styles.title}>{request.title}</Text>
-            {request.lines.map((line, index) => (
+            <Text style={styles.title}>{t(request.title)}</Text>
+            {request.lines.map((line, index) => {
+              const colon = line.indexOf(':');
+              const head = colon > 0 ? line.slice(0, colon) : '';
+              const labeled = head === 'Date and time' || head === 'From' || head === 'To';
+              const shown = labeled
+                ? `${t(head)}: ${t(line.slice(colon + 1).trim())}`
+                : t(line);
+              const when = head === 'Date and time';
+              return (
               <Text
                 key={`${index}-${line}`}
-                style={line.startsWith('Date and time:') ? styles.when : styles.line}>
-                {line}
+                style={when ? styles.when : styles.line}>
+                {shown}
               </Text>
-            ))}
+              );
+            })}
             <View style={styles.actions}>
               {request.hideCancel ? null : (
                 <Pressable
                   accessibilityRole="button"
                   onPress={close}
                   style={[styles.button, styles.cancel]}>
-                  <Text style={styles.cancelText}>Cancel</Text>
+                  <Text style={styles.cancelText}>{t('Cancel')}</Text>
                 </Pressable>
               )}
               <Pressable
@@ -56,7 +67,7 @@ export default function DialogHost() {
                 ]}>
                 <Text
                   style={request.destructive ? styles.dangerText : styles.confirmText}>
-                  {request.confirmLabel}
+                  {t(request.confirmLabel)}
                 </Text>
               </Pressable>
             </View>

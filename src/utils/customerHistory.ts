@@ -34,9 +34,11 @@ function pieceLines(order: Order): string[] {
   if (order.pieces.length === 0) {
     return [`${order.category || 'Other'} · ${order.itemName}`];
   }
-  return order.pieces.map(
-    piece => `${piece.category || 'Other'} · ${piece.itemName}${piece.description ? ` · ${piece.description}` : ''}`,
-  );
+  return order.pieces.map(piece => {
+    const tag = piece.tagNumber ? `Tag ${piece.tagNumber} · ` : '';
+    const note = piece.description ? ` · ${piece.description}` : '';
+    return `${tag}${piece.category || 'Other'} · ${piece.itemName}${note}`;
+  });
 }
 
 /** Every order and inquiry for one customer, newest day first. */
@@ -59,7 +61,7 @@ export function customerHistory(
         order.employeeNotes ? `Notes ${order.employeeNotes}` : '',
       ].filter(Boolean),
       phone: order.customerPhone,
-      imageUri: '',
+      imageUri: order.pieces.find(piece => piece.imageUri)?.imageUri || '',
       category: order.category,
       orderId: order.id,
     })),

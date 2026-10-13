@@ -5,7 +5,9 @@ import React, {useCallback, useState} from 'react';
 import {Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import LanguageButton from '../components/LanguageButton';
 import PlusButton from '../components/PlusButton';
+import {useLanguage} from '../i18n/LanguageProvider';
 import Screen from '../components/Screen';
 import StatusBadge from '../components/StatusBadge';
 import {listOrders} from '../services/orderService';
@@ -27,7 +29,14 @@ import {padX, padY, spacing} from '../theme/spacing';
 
 type Props = NativeStackScreenProps<ShopStackParamList, 'CalendarHome'>;
 
+const WEEK_LETTERS = {
+  en: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+  hi: ['र', 'सो', 'मं', 'बु', 'गु', 'शु', 'श'],
+  gu: ['ર', 'સો', 'મં', 'બુ', 'ગુ', 'શુ', 'શ'],
+} as const;
+
 export default function CalendarScreen({navigation}: Props) {
+  const {language, t} = useLanguage();
   const insets = useSafeAreaInsets();
   const today = todayISO();
   const [cursor, setCursor] = useState(() => {
@@ -72,8 +81,9 @@ export default function CalendarScreen({navigation}: Props) {
   };
   const dayOrders = ordersOnDay(orders, selected);
   const selectedDate = parseShopDate(selected);
+  const locale = language === 'hi' ? 'hi-IN' : language === 'gu' ? 'gu-IN' : 'en-IN';
   const selectedLabel = selectedDate
-    ? selectedDate.toLocaleDateString(undefined, {
+    ? selectedDate.toLocaleDateString(locale, {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
@@ -97,8 +107,9 @@ export default function CalendarScreen({navigation}: Props) {
           <View style={styles.headerButton} />
         )}
         <View style={styles.headerCopy}>
-          <Text style={styles.title}>Calendar</Text>
+          <Text style={styles.title}>{t('Calendar')}</Text>
         </View>
+        <LanguageButton />
         <PlusButton
           label="Order"
           tone="gold"
@@ -106,7 +117,7 @@ export default function CalendarScreen({navigation}: Props) {
         />
       </View>
       <ScrollView contentContainerStyle={styles.content}>
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? <Text style={styles.error}>{t(error)}</Text> : null}
         <View style={styles.card}>
           <View style={styles.monthRow}>
             <Pressable
@@ -118,7 +129,7 @@ export default function CalendarScreen({navigation}: Props) {
               <Text style={styles.monthArrow}>‹</Text>
             </Pressable>
             <View style={styles.monthCopy}>
-              <Text style={styles.month}>{MONTH_NAMES[cursor.month]}</Text>
+              <Text style={styles.month}>{t(MONTH_NAMES[cursor.month])}</Text>
               <Text style={styles.year}>{cursor.year}</Text>
             </View>
             <Pressable
@@ -131,8 +142,8 @@ export default function CalendarScreen({navigation}: Props) {
             </Pressable>
           </View>
           <View style={styles.weekRow}>
-            {WEEKDAYS.map((letter, index) => (
-              <Text key={`${letter}-${index}`} style={styles.weekday}>
+            {WEEK_LETTERS[language].map((letter, index) => (
+              <Text key={`${WEEKDAYS[index]}-${index}`} style={styles.weekday}>
                 {letter}
               </Text>
             ))}
@@ -178,12 +189,17 @@ export default function CalendarScreen({navigation}: Props) {
             <View style={styles.legendDot} />
             <Text style={styles.legendText}>
               {markedCount === 0
-                ? 'No data'
-                : `${markedCount} ${markedCount === 1 ? 'date' : 'dates'} with customers`}
+                ? t('No data')
+                : t(
+                    markedCount === 1
+                      ? '{count} date with customers'
+                      : '{count} dates with customers',
+                    {count: markedCount},
+                  )}
             </Text>
             {selected !== today ? (
               <Pressable accessibilityRole="button" onPress={showToday} hitSlop={6}>
-                <Text style={styles.todayLink}>Today</Text>
+                <Text style={styles.todayLink}>{t('Today')}</Text>
               </Pressable>
             ) : null}
           </View>
@@ -192,8 +208,10 @@ export default function CalendarScreen({navigation}: Props) {
           <Text style={styles.dayTitle}>{selectedLabel}</Text>
           <Text style={styles.dayCount}>
             {dayOrders.length === 0
-              ? 'No data'
-              : `${dayOrders.length} ${dayOrders.length === 1 ? 'order' : 'orders'}`}
+              ? t('No data')
+              : t(dayOrders.length === 1 ? '{count} order' : '{count} orders', {
+                  count: dayOrders.length,
+                })}
           </Text>
         </View>
         {dayOrders.map(order => (
@@ -204,7 +222,7 @@ export default function CalendarScreen({navigation}: Props) {
             style={styles.order}>
             <View style={styles.orderTop}>
               <Text style={styles.orderName} numberOfLines={1}>
-                {order.customerName || 'Customer record is missing'}
+                {order.customerName || t('Customer record is missing')}
               </Text>
               <StatusBadge status={order.status} />
             </View>
@@ -213,10 +231,12 @@ export default function CalendarScreen({navigation}: Props) {
               {order.customerPhone ? `  ·  ${order.customerPhone}` : ''}
             </Text>
             <Text style={styles.orderMeta} numberOfLines={2}>
-              {dayReason(order, selected)}
+              {t(dayReason(order, selected))}
               {'  ·  '}
-              Ordered {formatDay(order.orderDate)}
-              {order.expectedDeliveryDate ? `  ·  Delivery ${formatDay(order.expectedDeliveryDate)}` : ''}
+              {t('Ordered {date}', {date: formatDay(order.orderDate)})}
+              {order.expectedDeliveryDate
+                ? `  ·  ${t('Delivery {date}', {date: formatDay(order.expectedDeliveryDate)})}`
+                : ''}
             </Text>
             {order.description ? (
               <Text style={styles.orderMeta} numberOfLines={1}>

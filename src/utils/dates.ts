@@ -1,3 +1,6 @@
+import {getActiveLanguage} from '../i18n/active';
+import {translate} from '../i18n/translate';
+
 const MONTHS = [
   'Jan',
   'Feb',
@@ -87,7 +90,8 @@ export function formatDay(value: string): string {
   if (!date) {
     return value ? String(value) : '—';
   }
-  const day = `${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+  const month = translate(getActiveLanguage(), MONTHS[date.getMonth()]);
+  const day = `${date.getDate()} ${month} ${date.getFullYear()}`;
   if (!/[ T]\d{2}:\d{2}$/.test(String(value || '').trim())) {
     return day;
   }
@@ -99,13 +103,14 @@ export function formatDay(value: string): string {
 
 export function formatWhen(value: string): string {
   if (!value) {
-    return 'Not marked yet';
+    return translate(getActiveLanguage(), 'Not marked yet');
   }
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return formatDay(value);
   }
-  return date.toLocaleString(undefined, {
+  const locale = {en: 'en-IN', hi: 'hi-IN', gu: 'gu-IN'}[getActiveLanguage()];
+  return date.toLocaleString(locale, {
     day: '2-digit',
     month: 'short',
     year: 'numeric',

@@ -25,6 +25,8 @@ import OrderDetailsScreen from '../screens/OrderDetailsScreen';
 import OrdersScreen from '../screens/OrdersScreen';
 import ReadyOrdersScreen from '../screens/ReadyOrdersScreen';
 import BackIcon from '../components/BackIcon';
+import LanguageButton from '../components/LanguageButton';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
 import {important} from '../theme/type';
@@ -116,48 +118,53 @@ const stackScreenOptions = {
   headerShadowVisible: false,
   headerBackVisible: false,
   headerLeft: HeaderBack,
+  headerRight: LanguageMark,
   contentStyle: {backgroundColor: colors.ivory},
 };
 
-function sharedOrderScreens() {
+function LanguageMark() {
+  return <LanguageButton />;
+}
+
+function sharedOrderScreens(t: (source: string) => string) {
   return (
     <>
       <ShopStack.Screen
         name="OrderDetails"
         component={OrderDetailsScreen}
-        options={{title: 'Order'}}
+        options={{title: t('Order')}}
       />
       <ShopStack.Screen
         name="AddEditOrder"
         component={AddEditOrderScreen}
         options={({route}) => ({
-          title: route.params?.orderId ? 'Edit order' : 'New order',
+          title: route.params?.orderId ? t('Edit order') : t('New order'),
         })}
       />
       <ShopStack.Screen
         name="CustomerDetails"
         component={CustomerDetailsScreen}
-        options={{title: 'Customer'}}
+        options={{title: t('Customer')}}
       />
       <ShopStack.Screen
         name="AddEditCustomer"
         component={AddEditCustomerScreen}
         options={({route}) => ({
-          title: route.params?.customerId ? 'Edit customer' : 'New customer',
+          title: route.params?.customerId ? t('Edit customer') : t('New customer'),
         })}
       />
       <ShopStack.Screen
         name="AddEditInquiry"
         component={AddEditInquiryScreen}
         options={({route}) => ({
-          title: route.params?.inquiryId ? 'Edit inquiry' : 'New inquiry',
+          title: route.params?.inquiryId ? t('Edit inquiry') : t('New inquiry'),
         })}
       />
       <ShopStack.Screen
         name="AddEditRepair"
         component={AddEditRepairScreen}
         options={({route}) => ({
-          title: route.params?.repairId ? 'Edit repair' : 'New repair',
+          title: route.params?.repairId ? t('Edit repair') : t('New repair'),
         })}
       />
     </>
@@ -165,6 +172,7 @@ function sharedOrderScreens() {
 }
 
 function DeskStack() {
+  const {t} = useLanguage();
   return (
     <ShopStack.Navigator screenOptions={stackScreenOptions}>
       <ShopStack.Screen
@@ -175,14 +183,15 @@ function DeskStack() {
       <ShopStack.Screen
         name="Orders"
         component={OrdersScreen}
-        options={{title: 'Orders'}}
+        options={{title: t('Orders')}}
       />
-      {sharedOrderScreens()}
+      {sharedOrderScreens(t)}
     </ShopStack.Navigator>
   );
 }
 
 function CalendarStack() {
+  const {t} = useLanguage();
   return (
     <ShopStack.Navigator screenOptions={stackScreenOptions}>
       <ShopStack.Screen
@@ -190,12 +199,13 @@ function CalendarStack() {
         component={CalendarScreen}
         options={{headerShown: false}}
       />
-      {sharedOrderScreens()}
+      {sharedOrderScreens(t)}
     </ShopStack.Navigator>
   );
 }
 
 function CustomersStack() {
+  const {t} = useLanguage();
   return (
     <ShopStack.Navigator screenOptions={stackScreenOptions}>
       <ShopStack.Screen
@@ -203,12 +213,13 @@ function CustomersStack() {
         component={CustomersScreen}
         options={{headerShown: false}}
       />
-      {sharedOrderScreens()}
+      {sharedOrderScreens(t)}
     </ShopStack.Navigator>
   );
 }
 
 function ManageStack() {
+  const {t} = useLanguage();
   return (
     <ShopStack.Navigator screenOptions={stackScreenOptions}>
       <ShopStack.Screen
@@ -231,23 +242,24 @@ function ManageStack() {
         component={RepairsScreen}
         options={{headerShown: false}}
       />
-      <ShopStack.Screen name="Orders" component={OrdersScreen} options={{title: 'Orders'}} />
-      {sharedOrderScreens()}
+      <ShopStack.Screen name="Orders" component={OrdersScreen} options={{title: t('Orders')}} />
+      {sharedOrderScreens(t)}
     </ShopStack.Navigator>
   );
 }
 
 function MainTabs() {
+  const {t} = useLanguage();
   return (
     <Tab.Navigator tabBar={renderShopTabBar} screenOptions={{headerShown: false}}>
-      <Tab.Screen name="Dashboard" component={DeskStack} options={{title: 'Home'}} />
-      <Tab.Screen name="Calendar" component={CalendarStack} options={{title: 'Calendar'}} />
+      <Tab.Screen name="Dashboard" component={DeskStack} options={{title: t('Home')}} />
+      <Tab.Screen name="Calendar" component={CalendarStack} options={{title: t('Calendar')}} />
       <Tab.Screen
         name="Customers"
         component={CustomersStack}
-        options={{title: 'Customers'}}
+        options={{title: t('Customers')}}
       />
-      <Tab.Screen name="Manage" component={ManageStack} options={{title: 'Manage'}} />
+      <Tab.Screen name="Manage" component={ManageStack} options={{title: t('Manage')}} />
     </Tab.Navigator>
   );
 }

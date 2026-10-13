@@ -1,5 +1,6 @@
 import React from 'react';
 import {Pressable, StyleSheet, Text, type StyleProp, type ViewStyle} from 'react-native';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
 import {padY, spacing} from '../theme/spacing';
@@ -22,6 +23,7 @@ export default function AppButton({
   disabled = false,
   style,
 }: Props) {
+  const {t} = useLanguage();
   const labelTone =
     variant === 'primary' ? styles.onGold : variant === 'danger' ? styles.onDanger : styles.dark;
   return (
@@ -39,7 +41,7 @@ export default function AppButton({
         pressed && !disabled && styles.pressed,
         style,
       ]}>
-      <Text style={[styles.label, labelTone]}>{label}</Text>
+      <Text style={[styles.label, labelTone]}>{t(label)}</Text>
     </Pressable>
   );
 }

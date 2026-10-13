@@ -1,13 +1,16 @@
-import React, {type ReactNode} from 'react';
-import {KeyboardAvoidingView, Platform, StyleSheet} from 'react-native';
+import {HeaderHeightContext} from '@react-navigation/elements';
+import React, {type ReactNode, useContext} from 'react';
+import {KeyboardAvoidingView, StyleSheet} from 'react-native';
 
-/** Lifts every screen above the keyboard. */
+/** Lifts every screen above the keyboard, including screens under a stack header. */
 export default function Screen({children}: {children: ReactNode}) {
+  const headerHeight = useContext(HeaderHeightContext) ?? 0;
+
   return (
     <KeyboardAvoidingView
       style={styles.fill}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}>
+      behavior="padding"
+      keyboardVerticalOffset={headerHeight}>
       {children}
     </KeyboardAvoidingView>
   );

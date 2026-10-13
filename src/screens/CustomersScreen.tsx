@@ -17,12 +17,14 @@ import PlusButton from '../components/PlusButton';
 import Screen from '../components/Screen';
 import ShopHeader from '../components/ShopHeader';
 import {listCustomers} from '../services/customerService';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {padX, padY} from '../theme/spacing';
 
 type Props = NativeStackScreenProps<ShopStackParamList, 'CustomersHome'>;
 
 export default function CustomersScreen({navigation}: Props) {
+  const {t} = useLanguage();
   const [query, setQuery] = useState('');
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,7 +66,7 @@ export default function CustomersScreen({navigation}: Props) {
               placeholder="Name or phone number"
               autoCapitalize="none"
             />
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            {error ? <Text style={styles.error}>{t(error)}</Text> : null}
           </View>
         }
         ListEmptyComponent={

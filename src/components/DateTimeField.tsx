@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import {formatDateValue, formatDay, parseShopDate} from '../utils/dates';
+import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {gap, radius} from '../theme/layout';
 import {padY, spacing} from '../theme/spacing';
@@ -31,6 +32,7 @@ export default function DateTimeField({
   placeholder = 'Choose a date',
   optional = false,
 }: Props) {
+  const {t} = useLanguage();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(() => new Date());
 
@@ -48,7 +50,7 @@ export default function DateTimeField({
 
   return (
     <View style={styles.wrap}>
-      <Text style={[styles.label, error ? styles.labelError : null]}>{label}</Text>
+      <Text style={[styles.label, error ? styles.labelError : null]}>{t(label)}</Text>
       <Pressable
         accessibilityRole="button"
         onPress={show}
@@ -59,15 +61,15 @@ export default function DateTimeField({
               ? [styles.value, error ? styles.valueError : null]
               : [styles.placeholder, error ? styles.valueError : null]
           }>
-          {value ? formatDay(value) : placeholder}
+          {value ? formatDay(value) : t(placeholder)}
         </Text>
       </Pressable>
       {optional && value ? (
         <Pressable accessibilityRole="button" onPress={() => onChange('')} hitSlop={8}>
-          <Text style={styles.clear}>Clear date</Text>
+          <Text style={styles.clear}>{t('Clear date')}</Text>
         </Pressable>
       ) : null}
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? <Text style={styles.error}>{t(error)}</Text> : null}
       {open && Platform.OS === 'android' ? (
         <DateTimePicker
           value={draft}
@@ -80,7 +82,7 @@ export default function DateTimeField({
         <Modal transparent animationType="fade" onRequestClose={close}>
           <View style={styles.backdrop}>
             <View style={styles.sheet}>
-              <Text style={styles.sheetTitle}>{label}</Text>
+              <Text style={styles.sheetTitle}>{t(label)}</Text>
               <DateTimePicker
                 value={draft}
                 mode="date"
@@ -89,10 +91,10 @@ export default function DateTimeField({
               />
               <View style={styles.sheetActions}>
                 <Pressable onPress={close} style={styles.sheetButton}>
-                  <Text style={styles.cancel}>Cancel</Text>
+                  <Text style={styles.cancel}>{t('Cancel')}</Text>
                 </Pressable>
                 <Pressable onPress={() => commit(draft)} style={styles.sheetButton}>
-                  <Text style={styles.done}>Done</Text>
+                  <Text style={styles.done}>{t('Done')}</Text>
                 </Pressable>
               </View>
             </View>

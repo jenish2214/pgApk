@@ -1,5 +1,5 @@
 import type {Inquiry, Order} from '../types';
-import {dayKey, todayISO} from './dates';
+import {dayKey, formatDateValue, todayISO} from './dates';
 
 export const REMINDER_HOUR = 9;
 
@@ -10,6 +10,11 @@ export function nextReminderAt(now = new Date()): Date {
     next.setDate(next.getDate() + 1);
   }
   return next;
+}
+
+/** Calendar day the next 9:00 warning describes. */
+export function reminderFireDay(now = new Date()): string {
+  return formatDateValue(nextReminderAt(now));
 }
 
 export type ShopCall = {
@@ -99,7 +104,7 @@ export function orderReminderCopy(
     lines.push(`and ${extra} more`);
   }
   return {
-    title: '9:00 order reminder',
+    title: 'Order warning',
     body: lines.join('\n'),
   };
 }
