@@ -111,7 +111,8 @@ export default function ShopTabBar({state, descriptors, navigation}: BottomTabBa
                 waiting > 0 ? `${label}, ${waiting} ready for collection` : label
               }
               onPress={onPress}
-              style={[styles.button, focused ? styles.buttonOn : null]}>
+              android_ripple={null}
+              style={styles.button}>
               <View style={styles.iconWrap}>
                 <TabIcon name={tabName} color={tint} />
                 {waiting > 0 ? (
@@ -162,9 +163,6 @@ const styles = StyleSheet.create({
     minWidth: 0,
     paddingHorizontal: spacing.xs,
     paddingVertical: spacing.xs,
-  },
-  buttonOn: {
-    backgroundColor: colors.cream,
   },
   iconWrap: {
     alignItems: 'center',

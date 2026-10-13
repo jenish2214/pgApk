@@ -9,7 +9,16 @@ import type {
 } from '../types';
 import {INQUIRY_STATUSES, errorMessage, isFieldValidationError} from '../types';
 import React, {useCallback, useEffect, useState} from 'react';
-import {ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import AppButton from '../components/AppButton';
 import PlusButton from '../components/PlusButton';
@@ -20,7 +29,7 @@ import EmptyState from '../components/EmptyState';
 import Screen from '../components/Screen';
 import {listCustomers} from '../services/customerService';
 import {createInquiry, getInquiry, saveInquiry, shopTagNumbers} from '../services/inquiryService';
-import {pickShopImage} from '../utils/pickImage';
+import {captureShopPhoto, pickShopImage} from '../utils/pickImage';
 import {formatTagNumber, nextTagNumber} from '../utils/tags';
 import {confirmAction} from '../utils/confirm';
 import {formatDay, tomorrowISO} from '../utils/dates';
@@ -68,6 +77,7 @@ export default function AddEditInquiryScreen({navigation, route}: Props) {
   const [pieces, setPieces] = useState<InquiryPieceInput[]>([EMPTY_PIECE('1001')]);
   const [missing, setMissing] = useState(false);
   const [error, setError] = useState('');
+  const [photoIndex, setPhotoIndex] = useState<number | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -163,11 +173,17 @@ export default function AddEditInquiryScreen({navigation, route}: Props) {
     ]);
   };
 
-  const attachImage = async (index: number) => {
+  const choosePhoto = async (source: 'camera' | 'library') => {
+    const index = photoIndex;
+    setPhotoIndex(null);
+    if (index === null) {
+      return;
+    }
     try {
-      const uri = await pickShopImage();
+      const uri = source === 'camera' ? await captureShopPhoto() : await pickShopImage();
       if (uri) {
         changePiece(index, {imageUri: uri});
+        setError('');
       }
     } catch (pickError: unknown) {
       setError(errorMessage(pickError, 'The photo could not be added.'));
@@ -332,7 +348,7 @@ export default function AddEditInquiryScreen({navigation, route}: Props) {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Add photo"
-              onPress={() => attachImage(index)}
+              onPress={() => setPhotoIndex(index)}
               style={styles.photo}>
               {piece.imageUri ? (
                 <Image source={{uri: piece.imageUri}} style={styles.photoImage} />
@@ -430,6 +446,27 @@ export default function AddEditInquiryScreen({navigation, route}: Props) {
           </View>
         ) : null}
       </ScrollView>
+      <Modal
+        visible={photoIndex !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPhotoIndex(null)}>
+        <Pressable style={styles.backdrop} onPress={() => setPhotoIndex(null)}>
+          <Pressable style={styles.sheet} onPress={() => undefined}>
+            <Text style={styles.sheetTitle}>Jewellery photo</Text>
+            <Text style={styles.sheetNote}>
+              The camera is used only to photograph this inquiry.
+            </Text>
+            <AppButton label="Take photo" onPress={() => choosePhoto('camera')} />
+            <AppButton
+              label="Photo library"
+              variant="secondary"
+              onPress={() => choosePhoto('library')}
+              style={styles.follow}
+            />
+          </Pressable>
+        </Pressable>
+      </Modal>
     </Screen>
   );
 }
@@ -562,5 +599,28 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: important,
     marginBottom: spacing.sm,
+  },
+  backdrop: {
+    backgroundColor: 'rgba(15, 58, 46, 0.45)',
+    flex: 1,
+    justifyContent: 'flex-end',
+    padding: padX,
+  },
+  sheet: {
+    backgroundColor: colors.white,
+    borderRadius: radius,
+    marginBottom: spacing.lg,
+    padding: padX,
+  },
+  sheetTitle: {
+    color: colors.ink,
+    fontSize: 18,
+    fontWeight: important,
+  },
+  sheetNote: {
+    color: colors.muted,
+    fontSize: 14,
+    marginBottom: padY,
+    marginTop: spacing.xs,
   },
 });

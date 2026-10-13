@@ -4,12 +4,14 @@ import {errorMessage} from '../types';
 import React, {useCallback, useState} from 'react';
 import {Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
+import DeskAlertCard from '../components/DeskAlertCard';
 import TabIcon, {type DeskIconName} from '../components/TabIcon';
 import Screen from '../components/Screen';
 import ShopHeader from '../components/ShopHeader';
 import {listInquiries} from '../services/inquiryService';
-import {getDashboard} from '../services/orderService';
+import {getDashboard, listOrders} from '../services/orderService';
 import {listRepairs} from '../services/repairService';
+import {deskAlerts, type DeskAlert} from '../utils/deskAlerts';
 import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
@@ -28,32 +30,32 @@ type ManageOption = {
 
 const OPTIONS: ManageOption[] = [
   {
+    key: 'orders',
+    title: 'Orders',
+    detail: 'Pending, preparing, and ready',
+    screen: 'Orders',
+    icon: 'Orders',
+  },
+  {
     key: 'ready',
     title: 'Ready',
-    detail: 'Pieces waiting for collection',
+    detail: 'Waiting for the customer',
     screen: 'ReadyHome',
     icon: 'Ready',
   },
   {
     key: 'inquiries',
     title: 'Inquiry',
-    detail: 'Jewellery the customer is considering',
+    detail: 'Still deciding',
     screen: 'InquiryHome',
     icon: 'Inquiry',
   },
   {
     key: 'repairs',
     title: 'Repair',
-    detail: 'Jobs still in the workshop',
+    detail: 'Open in the workshop',
     screen: 'RepairHome',
     icon: 'Repair',
-  },
-  {
-    key: 'orders',
-    title: 'Orders',
-    detail: 'Open orders on the desk',
-    screen: 'Orders',
-    icon: 'Orders',
   },
 ];
 
@@ -68,17 +70,21 @@ type Props = NativeStackScreenProps<ShopStackParamList, 'ManageHome'>;
 
 export default function ManageScreen({navigation}: Props) {
   const [counts, setCounts] = useState(EMPTY_COUNTS);
+  const [alert, setAlert] = useState<DeskAlert | null>(null);
   const [error, setError] = useState('');
 
   const load = useCallback(() => {
     try {
       const desk = getDashboard().counts;
+      const orders = listOrders();
+      const inquiries = listInquiries();
       setCounts({
         ready: desk.ready,
-        inquiries: listInquiries().filter(item => item.status === 'Waiting').length,
+        inquiries: inquiries.filter(item => item.status === 'Waiting').length,
         repairs: listRepairs().filter(item => item.status !== 'Returned').length,
         orders: desk.pending + desk.preparing + desk.ready,
       });
+      setAlert(deskAlerts(orders, inquiries)[0] ?? null);
       setError('');
     } catch (loadError: unknown) {
       setError(errorMessage(loadError, 'The shop options could not be loaded.'));
@@ -91,35 +97,66 @@ export default function ManageScreen({navigation}: Props) {
     }, [load]),
   );
 
+  const openAlert = () => {
+    if (!alert) {
+      return;
+    }
+    if (alert.orderId) {
+      navigation.navigate('OrderDetails', {orderId: alert.orderId});
+      return;
+    }
+    if (alert.inquiryId) {
+      navigation.navigate('AddEditInquiry', {inquiryId: alert.inquiryId});
+      return;
+    }
+    navigation.navigate('ReadyHome');
+  };
+
   return (
     <Screen>
       <View style={styles.screen}>
         <ShopHeader title="Manage" />
         <ScrollView contentContainerStyle={styles.content}>
-          <Text style={styles.lead}>Ready, inquiry, repair, and orders.</Text>
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          {OPTIONS.map(option => {
-            const count = counts[option.key];
-            return (
-              <Pressable
-                key={option.key}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  count > 0 ? `${option.title}, ${count}` : option.title
-                }
-                onPress={() => navigation.navigate(option.screen)}
-                style={styles.card}>
-                <View style={styles.icon}>
-                  <TabIcon name={option.icon} color={colors.green} />
-                </View>
-                <View style={styles.copy}>
-                  <Text style={styles.title}>{option.title}</Text>
-                  <Text style={styles.detail}>{option.detail}</Text>
-                </View>
-                <Text style={styles.count}>{count}</Text>
-              </Pressable>
-            );
-          })}
+          {alert ? (
+            <View style={styles.block}>
+              <Text style={styles.section}>Attention</Text>
+              <DeskAlertCard
+                tone={alert.tone}
+                title={alert.title}
+                detail={alert.detail}
+                onPress={openAlert}
+              />
+            </View>
+          ) : null}
+          <Text style={styles.section}>Shop work</Text>
+          <View style={styles.panel}>
+            {OPTIONS.map((option, index) => {
+              const count = counts[option.key];
+              return (
+                <Pressable
+                  key={option.key}
+                  accessibilityRole="button"
+                  accessibilityLabel={count > 0 ? `${option.title}, ${count}` : option.title}
+                  onPress={() => navigation.navigate(option.screen)}
+                  style={({pressed}) => [
+                    styles.row,
+                    index > 0 && styles.rowLine,
+                    pressed && styles.rowPressed,
+                  ]}>
+                  <View style={styles.icon}>
+                    <TabIcon name={option.icon} color={colors.green} />
+                  </View>
+                  <View style={styles.copy}>
+                    <Text style={styles.title}>{option.title}</Text>
+                    <Text style={styles.detail}>{option.detail}</Text>
+                  </View>
+                  <Text style={count > 0 ? styles.count : styles.countQuiet}>{count}</Text>
+                  <View style={styles.chevron} />
+                </Pressable>
+              );
+            })}
+          </View>
         </ScrollView>
       </View>
     </Screen>
@@ -136,35 +173,45 @@ const styles = StyleSheet.create({
     paddingHorizontal: padX,
     paddingTop: padY,
   },
-  lead: {
-    color: colors.muted,
-    fontSize: 14,
-    marginBottom: padY,
-  },
   error: {
     color: colors.danger,
     marginBottom: padY,
   },
-  card: {
-    alignItems: 'center',
+  block: {
+    marginBottom: spacing.sm,
+  },
+  section: {
+    color: colors.muted,
+    fontSize: 12,
+    fontWeight: important,
+    letterSpacing: 0.4,
+    marginBottom: spacing.sm,
+  },
+  panel: {
     backgroundColor: colors.white,
     borderColor: colors.line,
     borderRadius: radius,
-    borderTopColor: colors.gold,
-    borderTopWidth: 3,
     borderWidth: 1,
+    overflow: 'hidden',
+  },
+  row: {
+    alignItems: 'center',
     flexDirection: 'row',
-    marginBottom: padY,
     paddingHorizontal: padY,
     paddingVertical: padY,
   },
+  rowLine: {
+    borderTopColor: colors.line,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  rowPressed: {
+    backgroundColor: colors.cream,
+  },
   icon: {
     alignItems: 'center',
-    backgroundColor: colors.cream,
-    borderRadius: radius,
-    height: 40,
+    height: 28,
     justifyContent: 'center',
-    width: 40,
+    width: 28,
   },
   copy: {
     flex: 1,
@@ -179,14 +226,31 @@ const styles = StyleSheet.create({
   detail: {
     color: colors.muted,
     fontSize: 13,
-    marginTop: spacing.xs,
+    marginTop: 2,
   },
   count: {
     color: colors.green,
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: important,
     marginLeft: spacing.sm,
-    minWidth: 28,
+    minWidth: 24,
     textAlign: 'right',
+  },
+  countQuiet: {
+    color: colors.muted,
+    fontSize: 18,
+    fontWeight: important,
+    marginLeft: spacing.sm,
+    minWidth: 24,
+    textAlign: 'right',
+  },
+  chevron: {
+    borderColor: colors.muted,
+    borderRightWidth: 1.5,
+    borderTopWidth: 1.5,
+    height: 8,
+    marginLeft: spacing.sm,
+    transform: [{rotate: '45deg'}],
+    width: 8,
   },
 });

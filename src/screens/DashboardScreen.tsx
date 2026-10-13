@@ -1,48 +1,40 @@
 import type {CompositeScreenProps} from '@react-navigation/native';
 import type {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
-import type {ShopCall} from '../utils/orderReminder';
-import type {Order, ShopStackParamList, TabParamList} from '../types';
+import type {Order, OrderStatus, ShopStackParamList, TabParamList} from '../types';
 import {errorMessage} from '../types';
 import React, {useCallback, useState} from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import {ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
+import DeskAlertCard from '../components/DeskAlertCard';
+import DeskHero from '../components/DeskHero';
 import OrderCard from '../components/OrderCard';
 import PlusButton from '../components/PlusButton';
 import Screen from '../components/Screen';
 import ShopHeader from '../components/ShopHeader';
 import {listInquiries} from '../services/inquiryService';
-import {getDashboard, listOrders} from '../services/orderService';
-import {formatWhen} from '../utils/dates';
-import {shopCalls} from '../utils/orderReminder';
-import {callCustomer} from '../utils/whatsappUtils';
-import {showNotice} from '../utils/confirm';
+import {changeOrderStatus, getDashboard, listOrders} from '../services/orderService';
+import {deskAlerts, ordersToUpdate, type DeskAlert} from '../utils/deskAlerts';
+import {confirmAction} from '../utils/confirm';
+import {timeGreeting} from '../utils/greeting';
+import {nextOrderStatus, nextStatusLabel} from '../utils/orderStatus';
 import {colors} from '../theme/colors';
-import {gap, radius, wp} from '../theme/layout';
+import {gap, radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
 import {important} from '../theme/type';
 
 type Tile = {
-  key: 'customers' | 'pending' | 'preparing' | 'ready' | 'inquiries';
+  key: 'customers' | 'pending' | 'preparing' | 'ready';
   label: string;
-  target: 'Customers' | 'Orders' | 'ReadyHome' | 'InquiryHome';
+  target: 'Customers' | 'Orders' | 'ReadyHome';
   status?: string;
 };
 
 const TILES: Tile[] = [
-  {key: 'customers', label: 'Customers', target: 'Customers'},
   {key: 'pending', label: 'Pending', target: 'Orders', status: 'Pending'},
-  {key: 'preparing', label: 'In preparation', target: 'Orders', status: 'In Preparation'},
+  {key: 'preparing', label: 'Preparing', target: 'Orders', status: 'In Preparation'},
   {key: 'ready', label: 'Ready', target: 'ReadyHome'},
-  {key: 'inquiries', label: 'Inquiry', target: 'InquiryHome'},
+  {key: 'customers', label: 'Customers', target: 'Customers'},
 ];
 
 type Props = CompositeScreenProps<
@@ -51,28 +43,26 @@ type Props = CompositeScreenProps<
 >;
 
 export default function DashboardScreen({navigation}: Props) {
-  const {width} = useWindowDimensions();
-  const columns = width >= 760 ? 4 : 2;
   const [counts, setCounts] = useState({
     customers: 0,
     pending: 0,
     preparing: 0,
     ready: 0,
-    inquiries: 0,
   });
-  const [readyOrders, setReadyOrders] = useState<Order[]>([]);
-  const [calls, setCalls] = useState<ShopCall[]>([]);
+  const [alerts, setAlerts] = useState<DeskAlert[]>([]);
+  const [updates, setUpdates] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [savingId, setSavingId] = useState(0);
   const [error, setError] = useState('');
 
   const load = useCallback(() => {
-    setLoading(true);
     try {
       const dashboard = getDashboard();
-      const waiting = listInquiries().filter(item => item.status === 'Waiting').length;
-      setCounts({...dashboard.counts, inquiries: waiting});
-      setReadyOrders(dashboard.readyOrders);
-      setCalls(shopCalls(listOrders(), listInquiries()));
+      const orders = listOrders();
+      const inquiries = listInquiries();
+      setCounts(dashboard.counts);
+      setAlerts(deskAlerts(orders, inquiries));
+      setUpdates(ordersToUpdate(orders));
       setError('');
     } catch (loadError: unknown) {
       setError(errorMessage(loadError, 'The shop desk could not be loaded.'));
@@ -99,95 +89,124 @@ export default function DashboardScreen({navigation}: Props) {
     navigation.getParent()?.navigate('Manage', {screen: tile.target});
   };
 
-  const openCall = (call: ShopCall) => {
-    if (call.orderId) {
-      navigation.navigate('OrderDetails', {orderId: call.orderId});
+  const openAlert = (alert: DeskAlert) => {
+    if (alert.orderId) {
+      navigation.navigate('OrderDetails', {orderId: alert.orderId});
       return;
     }
-    if (call.inquiryId) {
-      navigation.navigate('AddEditInquiry', {inquiryId: call.inquiryId});
+    if (alert.inquiryId) {
+      navigation.navigate('AddEditInquiry', {inquiryId: alert.inquiryId});
+      return;
+    }
+    navigation.getParent()?.navigate('Manage', {screen: 'ReadyHome'});
+  };
+
+  const applyStatus = async (order: Order, status: OrderStatus) => {
+    setSavingId(order.id);
+    try {
+      await changeOrderStatus(order.id, status);
+      setError('');
+      load();
+    } catch (updateError: unknown) {
+      setError(errorMessage(updateError, 'The order could not be updated.'));
+    } finally {
+      setSavingId(0);
     }
   };
 
-  const dial = async (phone: string) => {
-    try {
-      await callCustomer(phone);
-    } catch (callError: unknown) {
-      showNotice({
-        title: 'Pragati Gold',
-        message: errorMessage(callError, 'The customer could not be called.'),
-      });
+  const updateOrder = (order: Order) => {
+    const status = nextOrderStatus(order.status);
+    if (!status || savingId) {
+      return;
     }
+    if (status === 'Delivered') {
+      confirmAction({
+        title: 'Mark delivered',
+        confirmLabel: 'Delivered',
+        lines: [order.orderNumber, order.customerName || 'Customer', order.itemName],
+        onConfirm: () => {
+          applyStatus(order, status);
+        },
+      });
+      return;
+    }
+    applyStatus(order, status);
   };
+
+  const openCount = counts.pending + counts.preparing + counts.ready;
 
   return (
     <Screen>
-    <View style={styles.screen}>
-      <ShopHeader title="Home" />
-      <ScrollView contentContainerStyle={styles.content}>
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        <View style={styles.grid}>
-          {TILES.map(tile => (
-            <Pressable
-              key={tile.key}
-              accessibilityRole="button"
-              onPress={() => openTile(tile)}
-              style={[styles.tile, {width: columns === 4 ? wp('22%') : wp('44%')}]}>
-              <Text style={styles.count}>{counts[tile.key]}</Text>
-              <Text style={styles.tileLabel}>{tile.label}</Text>
-            </Pressable>
+      <View style={styles.screen}>
+        <ShopHeader title="Home" />
+        <ScrollView contentContainerStyle={styles.content}>
+          {loading ? <ActivityIndicator color={colors.gold} /> : null}
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+          <DeskHero
+            kicker={timeGreeting()}
+            value={String(openCount)}
+            label="Open on the desk"
+            notes={[`${counts.pending} pending`, `${counts.ready} ready`]}
+          />
+          <View style={styles.metricRow}>
+            {TILES.slice(0, 2).map(tile => (
+              <Pressable
+                key={tile.key}
+                accessibilityRole="button"
+                onPress={() => openTile(tile)}
+                style={styles.tile}>
+                <Text style={styles.count}>{counts[tile.key]}</Text>
+                <Text style={styles.tileLabel}>{tile.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <View style={styles.metricRow}>
+            {TILES.slice(2).map(tile => (
+              <Pressable
+                key={tile.key}
+                accessibilityRole="button"
+                onPress={() => openTile(tile)}
+                style={styles.tile}>
+                <Text style={styles.count}>{counts[tile.key]}</Text>
+                <Text style={styles.tileLabel}>{tile.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <View style={styles.sectionRow}>
+            <Text style={styles.section}>Needs attention</Text>
+            <PlusButton label="Order" onPress={() => navigation.navigate('AddEditOrder')} />
+          </View>
+          {alerts.length === 0 && !loading ? (
+            <Text style={styles.empty}>Nothing needs a call today.</Text>
+          ) : null}
+          {alerts.map(alert => (
+            <DeskAlertCard
+              key={alert.key}
+              tone={alert.tone}
+              title={alert.title}
+              detail={alert.detail}
+              onPress={() => openAlert(alert)}
+            />
           ))}
-        </View>
-        <View style={styles.actions}>
-          <Pressable
-            style={styles.action}
-            onPress={() => navigation.navigate('Orders')}>
-            <Text style={styles.actionText}>All orders</Text>
-          </Pressable>
-          <PlusButton label="Order" onPress={() => navigation.navigate('AddEditOrder')} />
-        </View>
-        <Text style={styles.section}>To call</Text>
-        {!loading && calls.length === 0 ? <Text style={styles.empty}>No data</Text> : null}
-        {calls.map(call => (
-          <View key={call.key} style={styles.callCard}>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => openCall(call)}
-              style={styles.callCopy}>
-              <Text style={styles.callReason}>{call.reason}</Text>
-              <Text style={styles.callName}>{call.name}</Text>
-              <Text style={styles.callDetail}>
-                {call.detail}
-                {call.phone ? ` · ${call.phone}` : ''}
-              </Text>
-            </Pressable>
-            {call.phone ? (
+          {updates.length > 0 ? <Text style={styles.section}>Update an order</Text> : null}
+          {updates.map(order => (
+            <OrderCard
+              key={order.id}
+              order={order}
+              onPress={() => navigation.navigate('OrderDetails', {orderId: order.id})}>
               <Pressable
                 accessibilityRole="button"
-                onPress={() => dial(call.phone)}
-                style={styles.callButton}>
-                <Text style={styles.callButtonText}>Call</Text>
+                disabled={savingId === order.id}
+                onPress={() => updateOrder(order)}
+                style={styles.update}>
+                <Text style={styles.updateText}>
+                  {savingId === order.id ? 'Updating…' : nextStatusLabel(order.status)}
+                </Text>
               </Pressable>
-            ) : null}
-          </View>
-        ))}
-        <Text style={styles.section}>Ready for collection</Text>
-        {loading && readyOrders.length === 0 ? (
-          <ActivityIndicator color={colors.gold} />
-        ) : null}
-        {!loading && readyOrders.length === 0 ? (
-          <Text style={styles.empty}>No data</Text>
-        ) : null}
-        {readyOrders.map(order => (
-          <OrderCard
-            key={order.id}
-            order={order}
-            meta={`Marked ready ${formatWhen(order.readyAt)}`}
-            onPress={() => navigation.navigate('OrderDetails', {orderId: order.id})}
-          />
-        ))}
-      </ScrollView>
-    </View>
+            </OrderCard>
+          ))}
+        </ScrollView>
+      </View>
     </Screen>
   );
 }
@@ -206,100 +225,59 @@ const styles = StyleSheet.create({
     color: colors.danger,
     marginBottom: padY,
   },
-  grid: {
+  metricRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    gap,
+    marginBottom: gap,
   },
   tile: {
     backgroundColor: colors.white,
     borderColor: colors.line,
     borderRadius: radius,
-    borderTopColor: colors.gold,
-    borderTopWidth: 3,
     borderWidth: 1,
-    marginBottom: padY,
-    paddingHorizontal: padX,
+    flex: 1,
+    paddingHorizontal: padY,
     paddingVertical: padY,
   },
   count: {
     color: colors.green,
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: important,
   },
   tileLabel: {
     color: colors.muted,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: important,
     marginTop: spacing.xs,
   },
-  actions: {
+  sectionRow: {
+    alignItems: 'center',
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap,
-    marginTop: padY,
+    justifyContent: 'space-between',
+    marginTop: spacing.sm,
   },
-  action: {
+  section: {
+    color: colors.ink,
+    fontSize: 16,
+    fontWeight: important,
+    marginBottom: padY,
+    marginTop: spacing.sm,
+  },
+  empty: {
+    color: colors.muted,
+    fontSize: 14,
+    marginBottom: padY,
+  },
+  update: {
+    alignSelf: 'flex-start',
     backgroundColor: colors.green,
     borderRadius: radius,
     paddingHorizontal: padY,
     paddingVertical: spacing.sm,
   },
-  actionText: {
+  updateText: {
     color: colors.cream,
-    fontWeight: important,
-  },
-  section: {
-    color: colors.ink,
-    fontSize: 18,
-    fontWeight: important,
-    marginBottom: padY,
-    marginTop: spacing.lg,
-  },
-  callCard: {
-    alignItems: 'center',
-    backgroundColor: colors.white,
-    borderColor: colors.line,
-    borderRadius: radius,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap,
-    marginBottom: padY,
-    padding: padY,
-  },
-  callCopy: {
-    flex: 1,
-  },
-  callReason: {
-    color: colors.gold,
-    fontSize: 12,
-    fontWeight: important,
-  },
-  callName: {
-    color: colors.ink,
-    fontSize: 15,
-    fontWeight: important,
-    marginTop: spacing.xs,
-  },
-  callDetail: {
-    color: colors.muted,
-    fontSize: 13,
-    marginTop: spacing.xs,
-  },
-  callButton: {
-    borderColor: colors.green,
-    borderRadius: radius,
-    borderWidth: 1,
-    paddingHorizontal: padY,
-    paddingVertical: spacing.sm,
-  },
-  callButtonText: {
-    color: colors.green,
     fontSize: 13,
     fontWeight: important,
-  },
-  empty: {
-    color: colors.muted,
-    fontSize: 15,
   },
 });

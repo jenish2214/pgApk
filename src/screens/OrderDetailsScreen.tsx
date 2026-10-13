@@ -55,18 +55,19 @@ export default function OrderDetailsScreen({navigation, route}: Props) {
     if (saving || !order || order.status === status) {
       return;
     }
+    if (status !== 'Delivered' && status !== 'Cancelled') {
+      updateStatus(status);
+      return;
+    }
     confirmAction({
-      title: 'Update status',
-      confirmLabel: 'Update',
+      title: status === 'Cancelled' ? 'Cancel order' : 'Mark delivered',
+      confirmLabel: status === 'Cancelled' ? 'Cancel order' : 'Delivered',
+      destructive: status === 'Cancelled',
       lines: [
         order.orderNumber,
-        order.customerName || 'Customer record is missing',
-        order.customerPhone || 'No phone number',
+        order.customerName || 'Customer',
         order.itemName,
-        `From: ${order.status}`,
-        `To: ${status}`,
-        `Ordered: ${formatDay(order.orderDate)}`,
-        `Delivery: ${order.expectedDeliveryDate ? formatDay(order.expectedDeliveryDate) : 'not set'}`,
+        `${order.status} to ${status}`,
       ],
       onConfirm: () => {
         updateStatus(status);

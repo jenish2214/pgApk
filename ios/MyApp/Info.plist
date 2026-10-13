@@ -41,7 +41,7 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Pragati Gold uses photos of jewellery for inquiries and orders.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Pragati Gold uses the camera to photograph jewellery.</string>
+	<string>Pragati Gold uses the camera to photograph jewellery for an inquiry.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
 	<key>RCTNewArchEnabled</key>

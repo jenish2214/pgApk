@@ -1,6 +1,7 @@
 import type {Inquiry, Order} from '../src/types';
 import {dayReason, marksByDay, monthGrid, ordersOnDay} from '../src/utils/calendar';
 import {customerHistory} from '../src/utils/customerHistory';
+import {deskAlerts} from '../src/utils/deskAlerts';
 import {employeeAlerts} from '../src/utils/orderAlerts';
 import {nextReminderAt, orderReminderCopy} from '../src/utils/orderReminder';
 import {homeKicker, timeGreeting} from '../src/utils/greeting';
@@ -180,4 +181,34 @@ test('alerts the employee and keeps customer history by date', () => {
   expect(history[0].lines.join(' ')).toContain('Inquiry · Waiting');
   expect(history[1].day).toBe('2026-10-08');
   expect(history[1].lines[0]).toBe('Ready for Collection');
+});
+
+test('keeps the desk alert list short and puts late work first', () => {
+  const alerts = deskAlerts(
+    [
+      sampleOrder({status: 'Ready for Collection', itemName: 'Necklace'}),
+      sampleOrder({
+        id: 2,
+        status: 'Ready for Collection',
+        itemName: 'Ring',
+      }),
+      sampleOrder({
+        id: 3,
+        status: 'In Preparation',
+        itemName: 'Bangles',
+        expectedDeliveryDate: '2026-10-07',
+      }),
+      sampleOrder({
+        id: 4,
+        status: 'Pending',
+        expectedDeliveryDate: '2026-10-20',
+      }),
+    ],
+    [],
+    '2026-10-09',
+  );
+  expect(alerts.map(alert => alert.title)).toEqual([
+    'Delivery is late',
+    '2 ready for collection',
+  ]);
 });
