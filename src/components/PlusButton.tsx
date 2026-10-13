@@ -1,0 +1,78 @@
+import React from 'react';
+import {Pressable, StyleSheet, Text, type StyleProp, type ViewStyle} from 'react-native';
+import {colors} from '../theme/colors';
+import {radius} from '../theme/layout';
+import {padX, padY, spacing} from '../theme/spacing';
+import {important} from '../theme/type';
+import PlusIcon from './PlusIcon';
+
+type Props = {
+  label: string;
+  onPress: () => void;
+  floating?: boolean;
+  tone?: 'green' | 'gold';
+  style?: StyleProp<ViewStyle>;
+};
+
+export default function PlusButton({
+  label,
+  onPress,
+  floating = false,
+  tone = 'green',
+  style,
+}: Props) {
+  const ink = tone === 'gold' ? colors.greenDeep : colors.cream;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={[
+        styles.button,
+        floating ? styles.floating : styles.inline,
+        tone === 'gold' ? styles.gold : styles.green,
+        style,
+      ]}>
+      <PlusIcon color={ink} size={floating ? 18 : 16} />
+      <Text style={[styles.label, {color: ink}]} numberOfLines={1}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  button: {
+    alignItems: 'center',
+    borderRadius: radius,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'center',
+  },
+  inline: {
+    minHeight: 36,
+    paddingHorizontal: padY,
+  },
+  floating: {
+    bottom: padY,
+    elevation: 4,
+    minHeight: 48,
+    paddingHorizontal: padX,
+    position: 'absolute',
+    right: padX,
+    shadowColor: colors.ink,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+  },
+  green: {
+    backgroundColor: colors.green,
+  },
+  gold: {
+    backgroundColor: colors.gold,
+  },
+  label: {
+    fontSize: 15,
+    fontWeight: important,
+  },
+});
