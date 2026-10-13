@@ -47,7 +47,10 @@ export default function RepairsScreen({navigation}: Props) {
   return (
     <Screen>
       <View style={styles.screen}>
-        <ShopHeader title="Repair" />
+        <ShopHeader
+          title="Repair"
+          onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
+        />
         <FlatList
           data={repairs}
           keyExtractor={item => String(item.id)}

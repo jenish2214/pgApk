@@ -256,6 +256,7 @@ export function errorMessage(error: unknown, fallback: string): string {
 
 export type ShopStackParamList = {
   DeskHome: undefined;
+  ManageHome: undefined;
   CustomersHome: undefined;
   ReadyHome: undefined;
   CustomerDetails: {customerId: number};
@@ -281,9 +282,7 @@ export type TabParamList = {
   Dashboard: NavigatorScreenParams<ShopStackParamList> | undefined;
   Calendar: NavigatorScreenParams<ShopStackParamList> | undefined;
   Customers: NavigatorScreenParams<ShopStackParamList> | undefined;
-  Ready: NavigatorScreenParams<ShopStackParamList> | undefined;
-  Inquiry: NavigatorScreenParams<ShopStackParamList> | undefined;
-  Repair: NavigatorScreenParams<ShopStackParamList> | undefined;
+  Manage: NavigatorScreenParams<ShopStackParamList> | undefined;
 };
 
 export type TabRouteName = keyof TabParamList;

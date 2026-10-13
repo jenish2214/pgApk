@@ -1,16 +1,35 @@
 import React from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import BackIcon from './BackIcon';
 import {colors} from '../theme/colors';
-import {padX, padY} from '../theme/spacing';
+import {padX, padY, spacing} from '../theme/spacing';
 import {important} from '../theme/type';
 
-export default function ShopHeader({title}: {title: string}) {
+export default function ShopHeader({
+  title,
+  onBack,
+}: {
+  title: string;
+  onBack?: () => void;
+}) {
   const insets = useSafeAreaInsets();
 
   return (
     <View style={[styles.header, {paddingTop: insets.top + padY}]}>
-      <Text style={styles.title}>{title}</Text>
+      <View style={styles.row}>
+        {onBack ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            onPress={onBack}
+            hitSlop={6}
+            style={styles.back}>
+            <BackIcon color={colors.cream} />
+          </Pressable>
+        ) : null}
+        <Text style={styles.title}>{title}</Text>
+      </View>
     </View>
   );
 }
@@ -21,8 +40,20 @@ const styles = StyleSheet.create({
     paddingBottom: padY,
     paddingHorizontal: padX,
   },
+  row: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  back: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+    minHeight: 36,
+    minWidth: 36,
+  },
   title: {
     color: colors.cream,
+    flex: 1,
     fontSize: 20,
     fontWeight: important,
   },

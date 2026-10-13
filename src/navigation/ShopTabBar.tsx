@@ -32,9 +32,7 @@ function isTabRoute(name: string): name is TabRouteName {
     name === 'Dashboard' ||
     name === 'Calendar' ||
     name === 'Customers' ||
-    name === 'Ready' ||
-    name === 'Inquiry' ||
-    name === 'Repair'
+    name === 'Manage'
   );
 }
 
@@ -80,7 +78,7 @@ export default function ShopTabBar({state, descriptors, navigation}: BottomTabBa
               ? options.tabBarLabel
               : options?.title ?? route.name;
           const tabName: TabRouteName = isTabRoute(route.name) ? route.name : 'Dashboard';
-          const waiting = tabName === 'Ready' ? readyCount : 0;
+          const waiting = tabName === 'Manage' ? readyCount : 0;
           const tint = focused ? colors.green : colors.muted;
           const onPress = () => {
             const event = navigation.emit({
@@ -113,7 +111,7 @@ export default function ShopTabBar({state, descriptors, navigation}: BottomTabBa
                 waiting > 0 ? `${label}, ${waiting} ready for collection` : label
               }
               onPress={onPress}
-              style={styles.button}>
+              style={[styles.button, focused ? styles.buttonOn : null]}>
               <View style={styles.iconWrap}>
                 <TabIcon name={tabName} color={tint} />
                 {waiting > 0 ? (
@@ -165,6 +163,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xs,
     paddingVertical: spacing.xs,
   },
+  buttonOn: {
+    backgroundColor: colors.cream,
+  },
   iconWrap: {
     alignItems: 'center',
     height: 24,
@@ -188,7 +189,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   label: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: important,
     marginTop: spacing.xs,
     textAlign: 'center',

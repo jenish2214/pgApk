@@ -13,6 +13,7 @@ import {
 import {isProductCategory} from './categories';
 import {dayKey, isValidDay, parseShopDate} from './dates';
 import {isOrderStatus} from './orderStatus';
+import {formatTagNumber} from './tags';
 
 export function phoneDigits(phone: string): string {
   return String(phone || '').replace(/\D/g, '');
@@ -90,10 +91,10 @@ export function validateInquiry(input: InquiryInput): FieldErrors {
   if (pieces.some(piece => !String(piece.itemName || '').trim())) {
     errors.itemName = 'Enter every jewellery item.';
   }
-  if (pieces.some(piece => !String(piece.tagNumber || '').trim())) {
-    errors.itemName = 'Enter a tag number for every piece.';
+  if (pieces.some(piece => !formatTagNumber(piece.tagNumber))) {
+    errors.itemName = 'Enter a tag number for every piece. Letters and digits are allowed.';
   }
-  const tags = pieces.map(piece => String(piece.tagNumber || '').trim()).filter(Boolean);
+  const tags = pieces.map(piece => formatTagNumber(piece.tagNumber)).filter(Boolean);
   if (new Set(tags).size !== tags.length) {
     errors.itemName = 'Each piece needs its own tag number.';
   }

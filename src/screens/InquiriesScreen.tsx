@@ -54,7 +54,10 @@ export default function InquiriesScreen({navigation}: Props) {
   return (
     <Screen>
     <View style={styles.screen}>
-      <ShopHeader title="Inquiry" />
+      <ShopHeader
+        title="Inquiry"
+        onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
+      />
       <FlatList
         data={inquiries}
         keyExtractor={item => String(item.id)}

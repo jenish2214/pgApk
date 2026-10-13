@@ -21,7 +21,7 @@ import Screen from '../components/Screen';
 import {listCustomers} from '../services/customerService';
 import {createInquiry, getInquiry, saveInquiry, shopTagNumbers} from '../services/inquiryService';
 import {pickShopImage} from '../utils/pickImage';
-import {nextTagNumber} from '../utils/tags';
+import {formatTagNumber, nextTagNumber} from '../utils/tags';
 import {confirmAction} from '../utils/confirm';
 import {formatDay, tomorrowISO} from '../utils/dates';
 import {hasFieldErrors, validateInquiry} from '../utils/validation';
@@ -114,7 +114,7 @@ export default function AddEditInquiryScreen({navigation, route}: Props) {
       setPieces(
         inquiry.pieces.length
           ? inquiry.pieces.map(piece => ({
-              tagNumber: piece.tagNumber,
+              tagNumber: formatTagNumber(piece.tagNumber),
               itemName: piece.itemName,
               imageUri: piece.imageUri,
             }))
@@ -344,8 +344,9 @@ export default function AddEditInquiryScreen({navigation, route}: Props) {
               <AppInput
                 label="Tag number"
                 value={piece.tagNumber}
-                onChangeText={value => changePiece(index, {tagNumber: value})}
-                keyboardType="number-pad"
+                onChangeText={value => changePiece(index, {tagNumber: formatTagNumber(value)})}
+                autoCapitalize="characters"
+                placeholder="A1001"
               />
               <AppInput
                 label="Jewellery item"

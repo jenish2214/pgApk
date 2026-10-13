@@ -17,6 +17,7 @@ import CustomersScreen from '../screens/CustomersScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import InquiriesScreen from '../screens/InquiriesScreen';
+import ManageScreen from '../screens/ManageScreen';
 import AddEditRepairScreen from '../screens/AddEditRepairScreen';
 import RepairsScreen from '../screens/RepairsScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
@@ -207,40 +208,30 @@ function CustomersStack() {
   );
 }
 
-function InquiryStack() {
+function ManageStack() {
   return (
     <ShopStack.Navigator screenOptions={stackScreenOptions}>
       <ShopStack.Screen
-        name="InquiryHome"
-        component={InquiriesScreen}
+        name="ManageHome"
+        component={ManageScreen}
         options={{headerShown: false}}
       />
-      {sharedOrderScreens()}
-    </ShopStack.Navigator>
-  );
-}
-
-function RepairStack() {
-  return (
-    <ShopStack.Navigator screenOptions={stackScreenOptions}>
-      <ShopStack.Screen
-        name="RepairHome"
-        component={RepairsScreen}
-        options={{headerShown: false}}
-      />
-      {sharedOrderScreens()}
-    </ShopStack.Navigator>
-  );
-}
-
-function ReadyStack() {
-  return (
-    <ShopStack.Navigator screenOptions={stackScreenOptions}>
       <ShopStack.Screen
         name="ReadyHome"
         component={ReadyOrdersScreen}
         options={{headerShown: false}}
       />
+      <ShopStack.Screen
+        name="InquiryHome"
+        component={InquiriesScreen}
+        options={{headerShown: false}}
+      />
+      <ShopStack.Screen
+        name="RepairHome"
+        component={RepairsScreen}
+        options={{headerShown: false}}
+      />
+      <ShopStack.Screen name="Orders" component={OrdersScreen} options={{title: 'Orders'}} />
       {sharedOrderScreens()}
     </ShopStack.Navigator>
   );
@@ -256,9 +247,7 @@ function MainTabs() {
         component={CustomersStack}
         options={{title: 'Customers'}}
       />
-      <Tab.Screen name="Ready" component={ReadyStack} options={{title: 'Ready'}} />
-      <Tab.Screen name="Inquiry" component={InquiryStack} options={{title: 'Inquiry'}} />
-      <Tab.Screen name="Repair" component={RepairStack} options={{title: 'Repair'}} />
+      <Tab.Screen name="Manage" component={ManageStack} options={{title: 'Manage'}} />
     </Tab.Navigator>
   );
 }

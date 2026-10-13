@@ -2,11 +2,13 @@ import React from 'react';
 import {StyleSheet, View} from 'react-native';
 import type {TabRouteName} from '../types';
 
+export type DeskIconName = TabRouteName | 'Ready' | 'Inquiry' | 'Repair' | 'Orders';
+
 export default function TabIcon({
   name,
   color,
 }: {
-  name: TabRouteName;
+  name: DeskIconName;
   color: string;
 }) {
   if (name === 'Calendar') {
@@ -46,6 +48,27 @@ export default function TabIcon({
       <View style={styles.frame}>
         <View style={[styles.ring, {borderColor: color}]} />
         <View style={[styles.tool, {backgroundColor: color}]} />
+      </View>
+    );
+  }
+
+  if (name === 'Manage') {
+    return (
+      <View style={styles.grid}>
+        <View style={[styles.cell, {backgroundColor: color}]} />
+        <View style={[styles.cell, {backgroundColor: color}]} />
+        <View style={[styles.cell, {backgroundColor: color}]} />
+        <View style={[styles.cell, {backgroundColor: color}]} />
+      </View>
+    );
+  }
+
+  if (name === 'Orders') {
+    return (
+      <View style={[styles.note, {borderColor: color}]}>
+        <View style={[styles.noteLine, {backgroundColor: color}]} />
+        <View style={[styles.noteLine, {backgroundColor: color}]} />
+        <View style={[styles.noteLine, styles.noteLineShort, {backgroundColor: color}]} />
       </View>
     );
   }
@@ -148,6 +171,19 @@ const styles = StyleSheet.create({
   },
   noteLineShort: {
     width: '70%',
+  },
+  grid: {
+    alignContent: 'space-between',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    height: 18,
+    justifyContent: 'space-between',
+    width: 18,
+  },
+  cell: {
+    borderRadius: 2,
+    height: 7,
+    width: 7,
   },
   ring: {
     borderRadius: 8,

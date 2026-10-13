@@ -33,7 +33,7 @@ import {important} from '../theme/type';
 type Tile = {
   key: 'customers' | 'pending' | 'preparing' | 'ready' | 'inquiries';
   label: string;
-  target: 'Customers' | 'Orders' | 'Ready' | 'Inquiry';
+  target: 'Customers' | 'Orders' | 'ReadyHome' | 'InquiryHome';
   status?: string;
 };
 
@@ -41,8 +41,8 @@ const TILES: Tile[] = [
   {key: 'customers', label: 'Customers', target: 'Customers'},
   {key: 'pending', label: 'Pending', target: 'Orders', status: 'Pending'},
   {key: 'preparing', label: 'In preparation', target: 'Orders', status: 'In Preparation'},
-  {key: 'ready', label: 'Ready', target: 'Ready'},
-  {key: 'inquiries', label: 'Inquiry', target: 'Inquiry'},
+  {key: 'ready', label: 'Ready', target: 'ReadyHome'},
+  {key: 'inquiries', label: 'Inquiry', target: 'InquiryHome'},
 ];
 
 type Props = CompositeScreenProps<
@@ -92,7 +92,11 @@ export default function DashboardScreen({navigation}: Props) {
       navigation.navigate('Orders', {status: tile.status});
       return;
     }
-    navigation.getParent()?.navigate(tile.target);
+    if (tile.target === 'Customers') {
+      navigation.getParent()?.navigate('Customers');
+      return;
+    }
+    navigation.getParent()?.navigate('Manage', {screen: tile.target});
   };
 
   const openCall = (call: ShopCall) => {

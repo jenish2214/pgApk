@@ -13,6 +13,7 @@ import {lastInsertId} from '../database/rows';
 import type {Inquiry, InquiryInput, InquiryPieceInput, SqlExecutor} from '../types';
 import {INQUIRY_STATUSES} from '../types';
 import {nowISO} from '../utils/dates';
+import {formatTagNumber} from '../utils/tags';
 import {notifyShopChanged} from './shopEvents';
 import {isValidPhone} from '../utils/validation';
 import {
@@ -33,7 +34,7 @@ function normalizePieces(input: InquiryInput): InquiryPieceInput[] {
     ? input.pieces
     : [{tagNumber: '', itemName: input.itemName, imageUri: ''}];
   return source.map(piece => ({
-    tagNumber: String(piece.tagNumber || '').trim(),
+    tagNumber: formatTagNumber(piece.tagNumber),
     itemName: String(piece.itemName || '').trim(),
     imageUri: String(piece.imageUri || '').trim(),
   }));

@@ -97,7 +97,10 @@ export default function ReadyOrdersScreen({navigation}: Props) {
   return (
     <Screen>
     <View style={styles.screen}>
-      <ShopHeader title="Ready" />
+      <ShopHeader
+        title="Ready"
+        onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
+      />
       <FlatList
         data={orders}
         keyExtractor={item => String(item.id)}
