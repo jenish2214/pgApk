@@ -15,6 +15,7 @@ import {
 import {homeKicker, timeGreeting} from '../src/utils/greeting';
 import {formatRupees} from '../src/utils/money';
 import {formatOrderNumber, nextSequence} from '../src/utils/orderNumbers';
+import {tryUnlockRepair} from '../src/services/repairAccess';
 import {validateCustomer, validateJangad, validateOrder} from '../src/utils/validation';
 import {buildReadyMessage, whatsAppPhone, whatsappUrl} from '../src/utils/whatsappUtils';
 
@@ -263,6 +264,11 @@ test('keeps the desk alert list short and puts late work first', () => {
     'Delivery is late',
     '2 ready for collection',
   ]);
+});
+
+test('opens repairs only for the shop sign-in', () => {
+  expect(tryUnlockRepair('admin', 'wrong')).toBe(false);
+  expect(tryUnlockRepair(' admin ', 'admin@123')).toBe(true);
 });
 
 test('requires shop, people, and a date with time on a jangad', () => {

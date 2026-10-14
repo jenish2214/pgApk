@@ -9,6 +9,7 @@ import PlusButton from '../components/PlusButton';
 import AppInput from '../components/AppInput';
 import DateTimeField from '../components/DateTimeField';
 import EmptyState from '../components/EmptyState';
+import RepairLock, {useRepairAccess} from '../components/RepairLock';
 import Screen from '../components/Screen';
 import {listCustomers} from '../services/customerService';
 import {createRepair, getRepair, saveRepair} from '../services/repairService';
@@ -47,6 +48,7 @@ type Props = NativeStackScreenProps<ShopStackParamList, 'AddEditRepair'>;
 
 export default function AddEditRepairScreen({navigation, route}: Props) {
   const {t} = useLanguage();
+  const {unlocked, unlock} = useRepairAccess();
   const repairId = route.params?.repairId;
   const [form, setForm] = useState<RepairInput>(EMPTY);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -57,6 +59,7 @@ export default function AddEditRepairScreen({navigation, route}: Props) {
   const [missing, setMissing] = useState(false);
   const [error, setError] = useState('');
   const [pieces, setPieces] = useState<RepairPieceInput[]>([{...EMPTY_PIECE}]);
+  const [signingIn, setSigningIn] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -143,6 +146,10 @@ export default function AddEditRepairScreen({navigation, route}: Props) {
   };
 
   const askSave = () => {
+    if (!unlocked) {
+      setSigningIn(true);
+      return;
+    }
     const fields = validateRepair({...form, pieces});
     if (hasFieldErrors(fields)) {
       setFieldErrors(fields);
@@ -193,6 +200,19 @@ export default function AddEditRepairScreen({navigation, route}: Props) {
     }
   };
 
+  if ((!repairId && !unlocked) || signingIn) {
+    return (
+      <Screen>
+        <RepairLock
+          onUnlock={() => {
+            unlock();
+            setSigningIn(false);
+          }}
+        />
+      </Screen>
+    );
+  }
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -228,6 +248,7 @@ export default function AddEditRepairScreen({navigation, route}: Props) {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled">
         {error ? <Text style={styles.error}>{t(error)}</Text> : null}
+        <View pointerEvents={unlocked ? 'auto' : 'none'}>
         <AppInput
           label="Find customer"
           value={customerQuery}
@@ -370,11 +391,16 @@ export default function AddEditRepairScreen({navigation, route}: Props) {
             );
           })}
         </View>
-        <AppButton
-          label={saving ? 'Saving…' : repairId ? 'Update repair' : 'Save repair'}
-          onPress={askSave}
-          disabled={saving}
-        />
+        </View>
+        {unlocked ? (
+          <AppButton
+            label={saving ? 'Saving…' : repairId ? 'Update repair' : 'Save repair'}
+            onPress={askSave}
+            disabled={saving}
+          />
+        ) : (
+          <AppButton label="Sign in to edit" onPress={() => setSigningIn(true)} />
+        )}
       </ScrollView>
     </Screen>
   );
