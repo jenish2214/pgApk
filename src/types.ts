@@ -224,13 +224,81 @@ export type RepairInput = {
   pieces?: RepairPieceInput[];
 };
 
+export const JANGAD_STATUSES = ['Given', 'Returned'] as const;
+
+export type JangadStatus = (typeof JANGAD_STATUSES)[number];
+
+export const JANGAD_DIRECTIONS = ['Exit', 'Entry'] as const;
+
+export type JangadDirection = (typeof JANGAD_DIRECTIONS)[number];
+
+export type JangadPiece = {
+  id: number;
+  jangadId: number;
+  tagNumber: string;
+  itemName: string;
+  quantity: number;
+};
+
+export type JangadPieceInput = {
+  tagNumber: string;
+  itemName: string;
+  quantity: number;
+};
+
+export type JangadMove = {
+  id: number;
+  jangadId: number;
+  direction: JangadDirection;
+  quantity: number;
+  movedAt: string;
+  note: string;
+};
+
+export type JangadMoveInput = {
+  direction: JangadDirection;
+  quantity: number;
+  movedAt: string;
+  note?: string;
+};
+
+export type Jangad = {
+  id: number;
+  shopName: string;
+  givenBy: string;
+  receivedBy: string;
+  handedAt: string;
+  note: string;
+  status: JangadStatus;
+  pieces: JangadPiece[];
+  moves: JangadMove[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type JangadInput = {
+  shopName: string;
+  givenBy: string;
+  receivedBy: string;
+  handedAt: string;
+  note?: string;
+  status: JangadStatus;
+  pieces?: JangadPieceInput[];
+  moves?: JangadMoveInput[];
+};
+
 export type FieldErrors = Partial<
   Record<
     | keyof CustomerInput
     | keyof OrderInput
     | keyof InquiryInput
     | keyof RepairInput
-    | 'customerId',
+    | keyof JangadInput
+    | 'customerId'
+    | 'tagNumber'
+    | 'quantity'
+    | 'direction'
+    | 'movedAt',
     string
   >
 >;
@@ -280,6 +348,8 @@ export type ShopStackParamList = {
   AddEditInquiry: {inquiryId?: number; customerId?: number} | undefined;
   RepairHome: undefined;
   AddEditRepair: {repairId?: number; customerId?: number} | undefined;
+  JangadHome: undefined;
+  AddEditJangad: {jangadId?: number} | undefined;
 };
 
 export type TabParamList = {

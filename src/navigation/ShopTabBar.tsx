@@ -1,4 +1,5 @@
 import type {BottomTabBarProps} from '@react-navigation/bottom-tabs';
+import {CommonActions, StackActions} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
 import {Keyboard, Pressable, StyleSheet, Text, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -7,6 +8,7 @@ import {getDashboard} from '../services/orderService';
 import {subscribeShopChanges} from '../services/shopEvents';
 import type {TabRouteName} from '../types';
 import {colors} from '../theme/colors';
+import {useColors} from '../theme/ThemeProvider';
 import {padX, spacing} from '../theme/spacing';
 import {important} from '../theme/type';
 import {radius} from '../theme/layout';
@@ -38,6 +40,7 @@ function isTabRoute(name: string): name is TabRouteName {
 
 export default function ShopTabBar({state, descriptors, navigation}: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const palette = useColors();
   const [readyCount, setReadyCount] = useState(0);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const onForm = FORM_SCREENS.has(focusedScreenName(state));
@@ -68,8 +71,8 @@ export default function ShopTabBar({state, descriptors, navigation}: BottomTabBa
   }
 
   return (
-    <View style={[styles.safe, {paddingBottom: Math.max(insets.bottom, 8)}]}>
-      <View style={styles.row}>
+    <View style={[styles.safe, {backgroundColor: palette.ivory, paddingBottom: Math.max(insets.bottom, 8)}]}>
+      <View style={[styles.row, {backgroundColor: palette.white}]}>
         {state.routes.map((route, index) => {
           const focused = state.index === index;
           const options = descriptors[route.key]?.options;
@@ -92,7 +95,24 @@ export default function ShopTabBar({state, descriptors, navigation}: BottomTabBa
                 },
               },
             });
-            if (focused || event.defaultPrevented) {
+            if (event.defaultPrevented) {
+              return;
+            }
+            if (focused) {
+              const nested = route.state;
+              const nestedIndex = nested?.index ?? 0;
+              const nestedName = nested?.routes?.[nestedIndex]?.name;
+              if (nested?.key && nestedIndex > 0) {
+                navigation.dispatch({
+                  ...StackActions.popToTop(),
+                  target: nested.key,
+                });
+              } else if (tabName === 'Manage' && nestedName && nestedName !== 'ManageHome') {
+                navigation.dispatch({
+                  ...CommonActions.navigate('Manage', {screen: 'ManageHome'}),
+                  target: state.key,
+                });
+              }
               return;
             }
             navigation.dispatch({

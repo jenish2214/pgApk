@@ -1,5 +1,5 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {
   Modal,
   Platform,
@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import {formatDateValue, formatDay, parseShopDate} from '../utils/dates';
+import {formatDateTimeValue, formatDateValue, formatDay, parseShopDate} from '../utils/dates';
 import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {gap, radius} from '../theme/layout';
@@ -22,6 +22,7 @@ type Props = {
   error?: string;
   placeholder?: string;
   optional?: boolean;
+  withTime?: boolean;
 };
 
 export default function DateTimeField({
@@ -31,21 +32,43 @@ export default function DateTimeField({
   error,
   placeholder = 'Choose a date',
   optional = false,
+  withTime = false,
 }: Props) {
   const {t} = useLanguage();
   const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<'date' | 'time'>('date');
+  const openingTime = useRef(false);
   const [draft, setDraft] = useState(() => new Date());
 
   const show = () => {
     setDraft(parseShopDate(value) ?? new Date());
+    setStep('date');
     setOpen(true);
   };
 
   const close = () => setOpen(false);
 
   const commit = (date: Date) => {
-    onChange(formatDateValue(date));
+    onChange(withTime ? formatDateTimeValue(date) : formatDateValue(date));
     close();
+  };
+
+  const onAndroidChange = (_event: unknown, selected: Date) => {
+    if (withTime && step === 'date') {
+      const next = new Date(draft);
+      next.setFullYear(selected.getFullYear(), selected.getMonth(), selected.getDate());
+      openingTime.current = true;
+      setDraft(next);
+      setStep('time');
+      return;
+    }
+    if (step === 'time') {
+      const next = new Date(draft);
+      next.setHours(selected.getHours(), selected.getMinutes(), 0, 0);
+      commit(next);
+      return;
+    }
+    commit(selected);
   };
 
   return (
@@ -72,10 +95,17 @@ export default function DateTimeField({
       {error ? <Text style={styles.error}>{t(error)}</Text> : null}
       {open && Platform.OS === 'android' ? (
         <DateTimePicker
+          key={step}
           value={draft}
-          mode="date"
-          onValueChange={(_event, selected) => commit(selected)}
-          onDismiss={close}
+          mode={step === 'time' ? 'time' : 'date'}
+          onValueChange={onAndroidChange}
+          onDismiss={() => {
+            if (openingTime.current) {
+              openingTime.current = false;
+              return;
+            }
+            close();
+          }}
         />
       ) : null}
       {open && Platform.OS === 'ios' ? (
@@ -85,7 +115,7 @@ export default function DateTimeField({
               <Text style={styles.sheetTitle}>{t(label)}</Text>
               <DateTimePicker
                 value={draft}
-                mode="date"
+                mode={withTime ? 'datetime' : 'date'}
                 display="spinner"
                 onValueChange={(_event, selected) => setDraft(selected)}
               />

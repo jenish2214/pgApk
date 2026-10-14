@@ -313,6 +313,78 @@ const MIGRATIONS = [
       tx.execute('ALTER TABLE order_items ADD COLUMN image_uri TEXT');
     },
   },
+  {
+    version: 10,
+    up(tx: SqlExecutor) {
+      tx.execute(`CREATE TABLE jangads (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        shop_name TEXT NOT NULL,
+        given_by TEXT NOT NULL,
+        received_by TEXT NOT NULL,
+        handed_at TEXT NOT NULL,
+        note TEXT,
+        status TEXT NOT NULL DEFAULT 'Given'
+          CHECK (status IN ('Given', 'Returned')),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )`);
+      tx.execute(`CREATE TABLE jangad_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        jangad_id INTEGER NOT NULL,
+        tag_number TEXT NOT NULL,
+        item_name TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (jangad_id) REFERENCES jangads(id) ON DELETE CASCADE
+      )`);
+      tx.execute('CREATE INDEX idx_jangads_status ON jangads(status)');
+      tx.execute('CREATE INDEX idx_jangads_handed_at ON jangads(handed_at)');
+      tx.execute('CREATE INDEX idx_jangad_items_jangad_id ON jangad_items(jangad_id)');
+      tx.execute('CREATE INDEX idx_jangad_items_tag_number ON jangad_items(tag_number)');
+    },
+  },
+  {
+    version: 11,
+    up(tx: SqlExecutor) {
+      tx.execute(
+        'ALTER TABLE jangad_items ADD COLUMN quantity INTEGER NOT NULL DEFAULT 1',
+      );
+      tx.execute(`CREATE TABLE jangad_moves (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        jangad_id INTEGER NOT NULL,
+        direction TEXT NOT NULL CHECK (direction IN ('Entry', 'Exit')),
+        quantity INTEGER NOT NULL,
+        moved_at TEXT NOT NULL,
+        note TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (jangad_id) REFERENCES jangads(id) ON DELETE CASCADE
+      )`);
+      tx.execute('CREATE INDEX idx_jangad_moves_jangad_id ON jangad_moves(jangad_id)');
+      tx.execute(
+        `INSERT INTO jangad_moves (jangad_id, direction, quantity, moved_at, created_at)
+         SELECT j.id, 'Exit',
+           CASE
+             WHEN COALESCE((SELECT SUM(quantity) FROM jangad_items i WHERE i.jangad_id = j.id), 0) < 1
+             THEN 1
+             ELSE (SELECT SUM(quantity) FROM jangad_items i WHERE i.jangad_id = j.id)
+           END,
+           j.handed_at, j.created_at
+         FROM jangads j`,
+      );
+      tx.execute(
+        `INSERT INTO jangad_moves (jangad_id, direction, quantity, moved_at, created_at)
+         SELECT j.id, 'Entry',
+           CASE
+             WHEN COALESCE((SELECT SUM(quantity) FROM jangad_items i WHERE i.jangad_id = j.id), 0) < 1
+             THEN 1
+             ELSE (SELECT SUM(quantity) FROM jangad_items i WHERE i.jangad_id = j.id)
+           END,
+           j.updated_at, j.updated_at
+         FROM jangads j
+         WHERE j.status = 'Returned'`,
+      );
+    },
+  },
 ];
 
 export async function migrate(db: NitroSQLiteConnection) {

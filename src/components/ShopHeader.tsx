@@ -3,7 +3,7 @@ import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useLanguage} from '../i18n/LanguageProvider';
 import BackIcon from './BackIcon';
-import LanguageButton from './LanguageButton';
+import {ManageMenu} from './ManageDrawer';
 import {colors} from '../theme/colors';
 import {padX, padY, spacing} from '../theme/spacing';
 import {important} from '../theme/type';
@@ -11,9 +11,11 @@ import {important} from '../theme/type';
 export default function ShopHeader({
   title,
   onBack,
+  menu = false,
 }: {
   title: string;
   onBack?: () => void;
+  menu?: boolean;
 }) {
   const insets = useSafeAreaInsets();
   const {t} = useLanguage();
@@ -21,6 +23,7 @@ export default function ShopHeader({
   return (
     <View style={[styles.header, {paddingTop: insets.top + padY}]}>
       <View style={styles.row}>
+        {menu ? <ManageMenu /> : null}
         {onBack ? (
           <Pressable
             accessibilityRole="button"
@@ -32,7 +35,6 @@ export default function ShopHeader({
           </Pressable>
         ) : null}
         <Text style={styles.title}>{t(title)}</Text>
-        <LanguageButton />
       </View>
     </View>
   );

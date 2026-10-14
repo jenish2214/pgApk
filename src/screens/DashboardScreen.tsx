@@ -1,7 +1,7 @@
 import type {CompositeScreenProps} from '@react-navigation/native';
 import type {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
-import type {Order, OrderStatus, ShopStackParamList, TabParamList} from '../types';
+import type {Jangad, Order, OrderStatus, ShopStackParamList, TabParamList} from '../types';
 import {errorMessage} from '../types';
 import React, {useCallback, useState} from 'react';
 import {ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
@@ -12,10 +12,12 @@ import OrderCard from '../components/OrderCard';
 import PlusButton from '../components/PlusButton';
 import Screen from '../components/Screen';
 import ShopHeader from '../components/ShopHeader';
+import {jangadQuantity, listJangads, returnJangad} from '../services/jangadService';
 import {listInquiries} from '../services/inquiryService';
 import {changeOrderStatus, getDashboard, listOrders} from '../services/orderService';
 import {deskAlerts, ordersToUpdate, type DeskAlert} from '../utils/deskAlerts';
 import {confirmAction} from '../utils/confirm';
+import {formatDay} from '../utils/dates';
 import {useLanguage} from '../i18n/LanguageProvider';
 import {timeGreeting} from '../utils/greeting';
 import {nextOrderStatus, nextStatusLabel} from '../utils/orderStatus';
@@ -53,8 +55,10 @@ export default function DashboardScreen({navigation}: Props) {
   });
   const [alerts, setAlerts] = useState<DeskAlert[]>([]);
   const [updates, setUpdates] = useState<Order[]>([]);
+  const [jangads, setJangads] = useState<Jangad[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(0);
+  const [savingJangadId, setSavingJangadId] = useState(0);
   const [error, setError] = useState('');
 
   const load = useCallback(() => {
@@ -65,6 +69,7 @@ export default function DashboardScreen({navigation}: Props) {
       setCounts(dashboard.counts);
       setAlerts(deskAlerts(orders, inquiries));
       setUpdates(ordersToUpdate(orders));
+      setJangads(listJangads('', 'Given'));
       setError('');
     } catch (loadError: unknown) {
       setError(errorMessage(loadError, 'The shop desk could not be loaded.'));
@@ -135,12 +140,46 @@ export default function DashboardScreen({navigation}: Props) {
     applyStatus(order, status);
   };
 
+  const openJangad = (jangadId?: number) => {
+    navigation.getParent()?.navigate('Manage', {
+      screen: jangadId ? 'AddEditJangad' : 'JangadHome',
+      params: jangadId ? {jangadId} : undefined,
+    });
+  };
+
+  const recordReturn = (jangad: Jangad) => {
+    if (savingJangadId) {
+      return;
+    }
+    confirmAction({
+      title: 'Return jangad',
+      confirmLabel: 'Return',
+      lines: [
+        jangad.shopName,
+        ...jangad.pieces.map(piece => `${piece.itemName} · ${piece.tagNumber} · ${piece.quantity}`),
+        t('Total {count}', {count: jangadQuantity(jangad)}),
+      ],
+      onConfirm: () => {
+        setSavingJangadId(jangad.id);
+        returnJangad(jangad.id)
+          .then(() => {
+            setError('');
+            load();
+          })
+          .catch((returnError: unknown) => {
+            setError(errorMessage(returnError, 'The jangad could not be saved.'));
+          })
+          .finally(() => setSavingJangadId(0));
+      },
+    });
+  };
+
   const openCount = counts.pending + counts.preparing + counts.ready;
 
   return (
     <Screen>
       <View style={styles.screen}>
-        <ShopHeader title="Home" />
+        <ShopHeader title="Home" menu />
         <ScrollView contentContainerStyle={styles.content}>
           {loading ? <ActivityIndicator color={colors.gold} /> : null}
           {error ? <Text style={styles.error}>{t(error)}</Text> : null}
@@ -174,6 +213,46 @@ export default function DashboardScreen({navigation}: Props) {
               </Pressable>
             ))}
           </View>
+          <View style={styles.sectionRow}>
+            <Text style={styles.section}>{t('Jangad')}</Text>
+            <PlusButton label="Jangad" onPress={() => openJangad()} />
+          </View>
+          {jangads.length === 0 && !loading ? (
+            <Text style={styles.empty}>{t('No data')}</Text>
+          ) : null}
+          {jangads.map(jangad => (
+            <Pressable
+              key={jangad.id}
+              accessibilityRole="button"
+              onPress={() => openJangad(jangad.id)}
+              style={styles.jangadCard}>
+              <View style={styles.jangadRow}>
+                <Text style={styles.jangadName}>{jangad.shopName}</Text>
+                <Text style={styles.jangadPending}>{t('Pending')}</Text>
+              </View>
+              {jangad.pieces.map(piece => (
+                <Text key={piece.id} style={styles.jangadLine}>
+                  {piece.itemName}
+                  {piece.tagNumber ? ` · ${piece.tagNumber}` : ''} · {piece.quantity}
+                </Text>
+              ))}
+              <Text style={styles.jangadLine}>{t('Total {count}', {count: jangadQuantity(jangad)})}</Text>
+              {jangad.moves.map(move => (
+                <Text key={move.id} style={styles.jangadWhen}>
+                  {t(move.direction)} · {move.quantity} · {formatDay(move.movedAt)}
+                </Text>
+              ))}
+              <Pressable
+                accessibilityRole="button"
+                disabled={savingJangadId === jangad.id}
+                onPress={() => recordReturn(jangad)}
+                style={styles.update}>
+                <Text style={styles.updateText}>
+                  {savingJangadId === jangad.id ? t('Saving…') : t('Return')}
+                </Text>
+              </Pressable>
+            </Pressable>
+          ))}
           <View style={styles.sectionRow}>
             <Text style={styles.section}>{t('Needs attention')}</Text>
             <PlusButton label="Order" onPress={() => navigation.navigate('AddEditOrder')} />
@@ -281,5 +360,41 @@ const styles = StyleSheet.create({
     color: colors.cream,
     fontSize: 13,
     fontWeight: important,
+  },
+  jangadCard: {
+    backgroundColor: colors.white,
+    borderColor: colors.line,
+    borderRadius: radius,
+    borderWidth: 1,
+    marginBottom: padY,
+    padding: padY,
+  },
+  jangadRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  jangadName: {
+    color: colors.ink,
+    flex: 1,
+    fontSize: 16,
+    fontWeight: important,
+    marginRight: spacing.sm,
+  },
+  jangadPending: {
+    color: colors.green,
+    fontSize: 12,
+    fontWeight: important,
+  },
+  jangadLine: {
+    color: colors.ink,
+    fontSize: 14,
+    fontWeight: important,
+    marginTop: spacing.xs,
+  },
+  jangadWhen: {
+    color: colors.muted,
+    fontSize: 13,
+    marginTop: spacing.xs,
   },
 });

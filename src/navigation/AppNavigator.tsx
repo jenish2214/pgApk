@@ -1,6 +1,6 @@
 import {errorMessage} from '../types';
 import React, {useEffect, useRef, useState} from 'react';
-import {Animated, Pressable, StyleSheet} from 'react-native';
+import {Animated, Pressable, StyleSheet, View} from 'react-native';
 import {NavigationContainer, useNavigation} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {
@@ -16,7 +16,9 @@ import CustomerDetailsScreen from '../screens/CustomerDetailsScreen';
 import CustomersScreen from '../screens/CustomersScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import DashboardScreen from '../screens/DashboardScreen';
+import AddEditJangadScreen from '../screens/AddEditJangadScreen';
 import InquiriesScreen from '../screens/InquiriesScreen';
+import JangadsScreen from '../screens/JangadsScreen';
 import ManageScreen from '../screens/ManageScreen';
 import AddEditRepairScreen from '../screens/AddEditRepairScreen';
 import RepairsScreen from '../screens/RepairsScreen';
@@ -25,7 +27,7 @@ import OrderDetailsScreen from '../screens/OrderDetailsScreen';
 import OrdersScreen from '../screens/OrdersScreen';
 import ReadyOrdersScreen from '../screens/ReadyOrdersScreen';
 import BackIcon from '../components/BackIcon';
-import LanguageButton from '../components/LanguageButton';
+import {ManageMenu} from '../components/ManageDrawer';
 import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
@@ -34,6 +36,10 @@ import ShopTabBar from './ShopTabBar';
 import {showNotice} from '../utils/confirm';
 
 const styles = StyleSheet.create({
+  leading: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
   back: {
     alignItems: 'center',
     borderRadius: radius,
@@ -107,8 +113,13 @@ function HeaderBackButton() {
   );
 }
 
-function HeaderBack() {
-  return <HeaderBackButton />;
+function HeaderLeading() {
+  return (
+    <View style={styles.leading}>
+      <ManageMenu />
+      <HeaderBackButton />
+    </View>
+  );
 }
 
 const stackScreenOptions = {
@@ -117,14 +128,9 @@ const stackScreenOptions = {
   headerTitleStyle: {fontWeight: important, fontSize: 17},
   headerShadowVisible: false,
   headerBackVisible: false,
-  headerLeft: HeaderBack,
-  headerRight: LanguageMark,
+  headerLeft: HeaderLeading,
   contentStyle: {backgroundColor: colors.ivory},
 };
-
-function LanguageMark() {
-  return <LanguageButton />;
-}
 
 function sharedOrderScreens(t: (source: string) => string) {
   return (
@@ -242,7 +248,23 @@ function ManageStack() {
         component={RepairsScreen}
         options={{headerShown: false}}
       />
-      <ShopStack.Screen name="Orders" component={OrdersScreen} options={{title: t('Orders')}} />
+      <ShopStack.Screen
+        name="JangadHome"
+        component={JangadsScreen}
+        options={{headerShown: false}}
+      />
+      <ShopStack.Screen
+        name="AddEditJangad"
+        component={AddEditJangadScreen}
+        options={({route}) => ({
+          title: route.params?.jangadId ? t('Edit jangad') : t('New jangad'),
+        })}
+      />
+      <ShopStack.Screen
+        name="Orders"
+        component={OrdersScreen}
+        options={{title: t('Orders')}}
+      />
       {sharedOrderScreens(t)}
     </ShopStack.Navigator>
   );
@@ -259,7 +281,7 @@ function MainTabs() {
         component={CustomersStack}
         options={{title: t('Customers')}}
       />
-      <Tab.Screen name="Manage" component={ManageStack} options={{title: t('Manage')}} />
+      <Tab.Screen name="Manage" component={ManageStack} options={{title: t('Settings')}} />
     </Tab.Navigator>
   );
 }

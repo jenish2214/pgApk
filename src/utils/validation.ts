@@ -1,17 +1,20 @@
 import {
   FieldValidationError,
   INQUIRY_STATUSES,
+  JANGAD_DIRECTIONS,
+  JANGAD_STATUSES,
   REPAIR_KINDS,
   REPAIR_METALS,
   REPAIR_STATUSES,
   type CustomerInput,
   type FieldErrors,
   type InquiryInput,
+  type JangadInput,
   type OrderInput,
   type RepairInput,
 } from '../types';
 import {isProductCategory} from './categories';
-import {dayKey, isValidDay, parseShopDate} from './dates';
+import {dayKey, isValidDateTime, isValidDay, parseShopDate} from './dates';
 import {isOrderStatus} from './orderStatus';
 import {formatTagNumber} from './tags';
 
@@ -155,6 +158,54 @@ export function validateRepair(input: RepairInput): FieldErrors {
   }
   if (!(REPAIR_STATUSES as readonly string[]).includes(input.status)) {
     errors.status = 'Choose the repair status.';
+  }
+  return errors;
+}
+
+export function wholeQuantity(value: unknown): number {
+  const quantity = Number(value);
+  return Number.isInteger(quantity) && quantity > 0 ? quantity : 0;
+}
+
+export function validateJangad(input: JangadInput): FieldErrors {
+  const errors: FieldErrors = {};
+  if (String(input.shopName || '').trim().length < 2) {
+    errors.shopName = 'Enter the shop name.';
+  }
+  if (String(input.givenBy || '').trim().length < 2) {
+    errors.givenBy = 'Enter who is giving the jewellery.';
+  }
+  if (String(input.receivedBy || '').trim().length < 2) {
+    errors.receivedBy = 'Enter who is receiving the jewellery.';
+  }
+  const pieces = input.pieces?.length
+    ? input.pieces
+    : [{tagNumber: '', itemName: '', quantity: 0}];
+  if (pieces.some(piece => !String(piece.itemName || '').trim())) {
+    errors.itemName = 'Enter every jewellery item.';
+  } else if (pieces.some(piece => wholeQuantity(piece.quantity) < 1)) {
+    errors.quantity = 'Enter how many pieces are in each item.';
+  } else {
+    const tags = pieces.map(piece => formatTagNumber(piece.tagNumber || '')).filter(Boolean);
+    if (new Set(tags).size !== tags.length) {
+      errors.tagNumber = 'Each piece needs its own tag number.';
+    }
+  }
+  const moves = input.moves || [];
+  if (moves.length === 0) {
+    errors.direction = 'Add an entry or an exit.';
+  } else if (moves.some(move => !(JANGAD_DIRECTIONS as readonly string[]).includes(move.direction))) {
+    errors.direction = 'Choose entry or exit.';
+  } else if (moves.some(move => wholeQuantity(move.quantity) < 1)) {
+    errors.quantity = 'Enter how many pieces went out or came back.';
+  } else if (moves.some(move => !isValidDateTime(move.movedAt))) {
+    errors.movedAt = 'Choose the date and time of every entry or exit.';
+  }
+  if (!isValidDateTime(input.handedAt)) {
+    errors.handedAt = 'Choose the date and time.';
+  }
+  if (!(JANGAD_STATUSES as readonly string[]).includes(input.status)) {
+    errors.status = 'Choose the jangad status.';
   }
   return errors;
 }

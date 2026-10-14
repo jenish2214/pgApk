@@ -51,7 +51,7 @@ export default function CustomersScreen({navigation}: Props) {
   return (
     <Screen>
     <View style={styles.screen}>
-      <ShopHeader title="Customers" />
+      <ShopHeader title="Customers" menu />
       <FlatList
         data={customers}
         keyExtractor={item => String(item.id)}

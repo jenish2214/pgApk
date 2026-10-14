@@ -41,10 +41,10 @@ export async function pickShopImage(): Promise<string | null> {
 }
 
 /** Asks for the camera, then photographs one piece for an inquiry. */
-export async function captureShopPhoto(): Promise<string | null> {
+export async function captureShopPhoto(denial = CAMERA_MESSAGE): Promise<string | null> {
   const allowed = await ensureCameraPermission();
   if (!allowed) {
-    throw new Error(CAMERA_MESSAGE);
+    throw new Error(denial);
   }
   const result = await launchCamera({
     mediaType: 'photo',
@@ -56,7 +56,7 @@ export async function captureShopPhoto(): Promise<string | null> {
     return null;
   }
   if (result.errorCode === 'permission') {
-    throw new Error(CAMERA_MESSAGE);
+    throw new Error(denial);
   }
   if (result.errorCode) {
     throw new Error('The camera could not take a photo.');

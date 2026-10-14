@@ -58,6 +58,7 @@ export default function InquiriesScreen({navigation}: Props) {
     <View style={styles.screen}>
       <ShopHeader
         title="Inquiry"
+        menu
         onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
       />
       <FlatList

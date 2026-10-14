@@ -2,14 +2,33 @@ import type {Inquiry, Order} from '../types';
 import {dayKey, formatDateValue, todayISO} from './dates';
 
 export const REMINDER_HOUR = 9;
+export const MORNING_REMINDER_ID = 'pragati-order-warning';
 
-export function nextReminderAt(now = new Date()): Date {
+/** Preparation siren: 9:00 AM and 12:00 AM. */
+export const PREPARATION_SIREN_HOURS = [9, 0] as const;
+
+/** True for scheduled shop alerts that must sound the siren. */
+export function shopAlertPlaysSiren(id?: string): boolean {
+  if (!id) {
+    return false;
+  }
+  if (id === MORNING_REMINDER_ID) {
+    return true;
+  }
+  return PREPARATION_SIREN_HOURS.some(hour => id === `pragati-prep-siren-${hour}`);
+}
+
+export function nextClockAt(hour: number, now = new Date()): Date {
   const next = new Date(now);
-  next.setHours(REMINDER_HOUR, 0, 0, 0);
+  next.setHours(hour, 0, 0, 0);
   if (next.getTime() <= now.getTime()) {
     next.setDate(next.getDate() + 1);
   }
   return next;
+}
+
+export function nextReminderAt(now = new Date()): Date {
+  return nextClockAt(REMINDER_HOUR, now);
 }
 
 /** Calendar day the next 9:00 warning describes. */
@@ -106,5 +125,45 @@ export function orderReminderCopy(
   return {
     title: 'Order warning',
     body: lines.join('\n'),
+  };
+}
+
+/** Orders still being made, named for the 9:00 AM and 12:00 AM siren. */
+export function preparationSirenCopy(orders: Order[]): {title: string; body: string} | null {
+  const preparing = orders.filter(order => order.status === 'In Preparation');
+  if (preparing.length === 0) {
+    return null;
+  }
+  const shown = preparing.slice(0, 6);
+  const extra = preparing.length - shown.length;
+  const lines = shown.map(order => {
+    const who = order.customerName.trim() || 'Customer';
+    const item = order.itemName || 'Jewellery';
+    return `In Preparation: ${who}, ${item}`;
+  });
+  if (extra > 0) {
+    lines.push(`and ${extra} more`);
+  }
+  return {
+    title: 'Order alert',
+    body: lines.join('\n'),
+  };
+}
+
+/** Everything the shop could miss: preparation, ready, due, late, and inquiries. */
+export function shopSirenCopy(
+  orders: Order[],
+  today = todayISO(),
+  inquiries: Inquiry[] = [],
+): {title: string; body: string} | null {
+  const parts = [preparationSirenCopy(orders), orderReminderCopy(orders, today, inquiries)].filter(
+    (part): part is {title: string; body: string} => part !== null,
+  );
+  if (parts.length === 0) {
+    return null;
+  }
+  return {
+    title: 'Order alert',
+    body: parts.map(part => part.body).join('\n'),
   };
 }

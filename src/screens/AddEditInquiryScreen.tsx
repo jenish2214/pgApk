@@ -28,7 +28,9 @@ import DateTimeField from '../components/DateTimeField';
 import EmptyState from '../components/EmptyState';
 import Screen from '../components/Screen';
 import {listCustomers} from '../services/customerService';
+import {jangadTagNumbers} from '../services/jangadService';
 import {createInquiry, getInquiry, saveInquiry, shopTagNumbers} from '../services/inquiryService';
+import {orderTagNumbers} from '../services/orderService';
 import {captureShopPhoto, pickShopImage} from '../utils/pickImage';
 import {formatTagNumber, nextTagNumber} from '../utils/tags';
 import {confirmAction} from '../utils/confirm';
@@ -104,7 +106,7 @@ export default function AddEditInquiryScreen({navigation, route}: Props) {
           }));
         }
       }
-      setPieces([EMPTY_PIECE(nextTagNumber(shopTagNumbers()))]);
+      setPieces([EMPTY_PIECE(nextTagNumber([...shopTagNumbers(), ...orderTagNumbers(), ...jangadTagNumbers()]))]);
       setLoading(false);
       return;
     }
@@ -130,7 +132,7 @@ export default function AddEditInquiryScreen({navigation, route}: Props) {
               itemName: piece.itemName,
               imageUri: piece.imageUri,
             }))
-          : [EMPTY_PIECE(nextTagNumber(shopTagNumbers()))],
+          : [EMPTY_PIECE(nextTagNumber([...shopTagNumbers(), ...orderTagNumbers(), ...jangadTagNumbers()]))],
       );
     } catch (loadError: unknown) {
       setError(errorMessage(loadError, 'This inquiry could not be loaded.'));
@@ -171,7 +173,14 @@ export default function AddEditInquiryScreen({navigation, route}: Props) {
   const addPiece = () => {
     setPieces(current => [
       ...current,
-      EMPTY_PIECE(nextTagNumber([...shopTagNumbers(), ...current.map(piece => piece.tagNumber)])),
+      EMPTY_PIECE(
+        nextTagNumber([
+          ...shopTagNumbers(),
+          ...orderTagNumbers(),
+          ...jangadTagNumbers(),
+          ...current.map(piece => piece.tagNumber),
+        ]),
+      ),
     ]);
   };
 

@@ -19,6 +19,9 @@ import {isProductCategory} from '../utils/categories';
 import {nowISO} from '../utils/dates';
 import {formatTagNumber} from '../utils/tags';
 import {isOrderStatus, READY_STATUS} from '../utils/orderStatus';
+import {orderSirenEnabled, playOrderSiren} from './orderSiren';
+import {getActiveLanguage} from '../i18n/active';
+import {translate} from '../i18n/translate';
 import {notifyShopChanged} from './shopEvents';
 import {
   hasFieldErrors,
@@ -277,7 +280,19 @@ export function changeOrderStatus(
       if (saved && existing.status !== status) {
         recordEvent(tx, saved, 'Status changed', `${existing.status} → ${status}`, now);
       }
-      return saved;
+      return {order: saved, previous: existing.status};
     }),
-  );
+  ).then(result => {
+    const order = result?.order ?? null;
+    const becameReady = order?.status === 'Ready for Collection';
+    if (order && result && result.previous !== order.status && becameReady && orderSirenEnabled()) {
+      const language = getActiveLanguage();
+      const title = 'Ready for collection';
+      playOrderSiren(
+        translate(language, title),
+        `${order.customerName || translate(language, 'Customer')} · ${order.itemName}`,
+      ).catch(() => undefined);
+    }
+    return order;
+  });
 }

@@ -5,7 +5,7 @@ import React, {useCallback, useState} from 'react';
 import {Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import LanguageButton from '../components/LanguageButton';
+import {ManageMenu} from '../components/ManageDrawer';
 import PlusButton from '../components/PlusButton';
 import {useLanguage} from '../i18n/LanguageProvider';
 import Screen from '../components/Screen';
@@ -104,12 +104,11 @@ export default function CalendarScreen({navigation}: Props) {
             <Text style={styles.headerIcon}>‹</Text>
           </Pressable>
         ) : (
-          <View style={styles.headerButton} />
+          <ManageMenu />
         )}
         <View style={styles.headerCopy}>
           <Text style={styles.title}>{t('Calendar')}</Text>
         </View>
-        <LanguageButton />
         <PlusButton
           label="Order"
           tone="gold"

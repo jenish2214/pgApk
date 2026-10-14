@@ -3,11 +3,19 @@ import {dayReason, marksByDay, monthGrid, ordersOnDay} from '../src/utils/calend
 import {customerHistory} from '../src/utils/customerHistory';
 import {deskAlerts} from '../src/utils/deskAlerts';
 import {employeeAlerts} from '../src/utils/orderAlerts';
-import {nextReminderAt, orderReminderCopy, reminderFireDay} from '../src/utils/orderReminder';
+import {
+  nextClockAt,
+  nextReminderAt,
+  orderReminderCopy,
+  preparationSirenCopy,
+  reminderFireDay,
+  shopAlertPlaysSiren,
+  shopSirenCopy,
+} from '../src/utils/orderReminder';
 import {homeKicker, timeGreeting} from '../src/utils/greeting';
 import {formatRupees} from '../src/utils/money';
 import {formatOrderNumber, nextSequence} from '../src/utils/orderNumbers';
-import {validateCustomer, validateOrder} from '../src/utils/validation';
+import {validateCustomer, validateJangad, validateOrder} from '../src/utils/validation';
 import {buildReadyMessage, whatsAppPhone, whatsappUrl} from '../src/utils/whatsappUtils';
 
 test('builds the ready-for-collection WhatsApp message', () => {
@@ -145,6 +153,48 @@ test('builds a 9:00 reminder for ready and due orders', () => {
   );
 });
 
+test('sounds a preparation siren at 9:00 AM and 12:00 AM', () => {
+  const morning = new Date(2026, 9, 9, 8, 0);
+  expect(nextClockAt(9, morning).getHours()).toBe(9);
+  expect(nextClockAt(9, morning).getDate()).toBe(9);
+  const afterNine = nextClockAt(9, new Date(2026, 9, 9, 10, 0));
+  expect(afterNine.getDate()).toBe(10);
+  const midnight = nextClockAt(0, new Date(2026, 9, 9, 23, 0));
+  expect(midnight.getDate()).toBe(10);
+  expect(midnight.getHours()).toBe(0);
+
+  const copy = preparationSirenCopy([
+    sampleOrder({status: 'In Preparation', customerName: 'Anita Shah', itemName: 'Necklace'}),
+    sampleOrder({id: 2, status: 'Ready for Collection', customerName: 'Raj Patel'}),
+  ]);
+  expect(copy).toEqual({
+    title: 'Order alert',
+    body: 'In Preparation: Anita Shah, Necklace',
+  });
+  expect(preparationSirenCopy([sampleOrder({status: 'Pending'})])).toBe(null);
+  expect(shopAlertPlaysSiren('pragati-order-warning')).toBe(true);
+  expect(shopAlertPlaysSiren('pragati-prep-siren-9')).toBe(true);
+  expect(shopAlertPlaysSiren('pragati-prep-siren-0')).toBe(true);
+  expect(shopAlertPlaysSiren('pragati-order-siren')).toBe(false);
+  expect(shopAlertPlaysSiren('pragati-shop-alert')).toBe(false);
+
+  const combined = shopSirenCopy(
+    [
+      sampleOrder({status: 'In Preparation', customerName: 'Anita Shah', itemName: 'Necklace'}),
+      sampleOrder({
+        id: 2,
+        status: 'Pending',
+        customerName: 'Raj Patel',
+        itemName: 'Bangles',
+        expectedDeliveryDate: '2026-10-09',
+      }),
+    ],
+    '2026-10-09',
+  );
+  expect(combined?.body).toContain('In Preparation: Anita Shah, Necklace');
+  expect(combined?.body).toContain('Due: Raj Patel');
+});
+
 test('alerts the employee and keeps customer history by date', () => {
   const ready = sampleOrder({
     status: 'Ready for Collection',
@@ -213,4 +263,34 @@ test('keeps the desk alert list short and puts late work first', () => {
     'Delivery is late',
     '2 ready for collection',
   ]);
+});
+
+test('requires shop, people, and a date with time on a jangad', () => {
+  const missing = validateJangad({
+    shopName: '',
+    givenBy: '',
+    receivedBy: '',
+    handedAt: '2026-10-13',
+    status: 'Given',
+    pieces: [{tagNumber: '', itemName: '', quantity: 0}],
+  });
+  expect(missing.shopName).toBeTruthy();
+  expect(missing.handedAt).toBeTruthy();
+  expect(missing.itemName).toBeTruthy();
+  expect(missing.tagNumber).toBeFalsy();
+  expect(missing.direction).toBeTruthy();
+
+  const ready = validateJangad({
+    shopName: 'Mehta Jewellers',
+    givenBy: 'Ramesh',
+    receivedBy: 'Suresh',
+    handedAt: '2026-10-13 16:30',
+    status: 'Given',
+    pieces: [{tagNumber: '', itemName: 'Necklace', quantity: 23}],
+    moves: [
+      {direction: 'Exit', quantity: 23, movedAt: '2026-10-13 16:30'},
+      {direction: 'Entry', quantity: 23, movedAt: '2026-10-20 11:00'},
+    ],
+  });
+  expect(Object.keys(ready)).toHaveLength(0);
 });

@@ -85,6 +85,11 @@ export function isValidDay(value: string): boolean {
   return parseShopDate(value) !== null;
 }
 
+export function isValidDateTime(value: string): boolean {
+  const text = String(value || '').trim();
+  return /[ T]\d{2}:\d{2}$/.test(text) && parseShopDate(text) !== null;
+}
+
 export function formatDay(value: string): string {
   const date = parseShopDate(value);
   if (!date) {

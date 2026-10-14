@@ -2,7 +2,7 @@ import React from 'react';
 import {StyleSheet, View} from 'react-native';
 import type {TabRouteName} from '../types';
 
-export type DeskIconName = TabRouteName | 'Ready' | 'Inquiry' | 'Repair' | 'Orders';
+export type DeskIconName = TabRouteName | 'Ready' | 'Inquiry' | 'Repair' | 'Orders' | 'Jangad';
 
 export default function TabIcon({
   name,
@@ -54,11 +54,10 @@ export default function TabIcon({
 
   if (name === 'Manage') {
     return (
-      <View style={styles.grid}>
-        <View style={[styles.cell, {backgroundColor: color}]} />
-        <View style={[styles.cell, {backgroundColor: color}]} />
-        <View style={[styles.cell, {backgroundColor: color}]} />
-        <View style={[styles.cell, {backgroundColor: color}]} />
+      <View style={styles.settings}>
+        <View style={[styles.slider, {backgroundColor: color}]} />
+        <View style={[styles.slider, styles.sliderShift, {backgroundColor: color}]} />
+        <View style={[styles.slider, {backgroundColor: color}]} />
       </View>
     );
   }
@@ -69,6 +68,16 @@ export default function TabIcon({
         <View style={[styles.noteLine, {backgroundColor: color}]} />
         <View style={[styles.noteLine, {backgroundColor: color}]} />
         <View style={[styles.noteLine, styles.noteLineShort, {backgroundColor: color}]} />
+      </View>
+    );
+  }
+
+  if (name === 'Jangad') {
+    return (
+      <View style={styles.pass}>
+        <View style={[styles.passBox, {borderColor: color}]} />
+        <View style={[styles.passArrow, {backgroundColor: color}]} />
+        <View style={[styles.passBox, {borderColor: color}]} />
       </View>
     );
   }
@@ -172,6 +181,20 @@ const styles = StyleSheet.create({
   noteLineShort: {
     width: '70%',
   },
+  settings: {
+    height: 16,
+    justifyContent: 'space-between',
+    width: 18,
+  },
+  slider: {
+    borderRadius: 1,
+    height: 2,
+    width: 18,
+  },
+  sliderShift: {
+    marginLeft: 6,
+    width: 12,
+  },
   grid: {
     alignContent: 'space-between',
     flexDirection: 'row',
@@ -190,6 +213,23 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     height: 14,
     width: 14,
+  },
+  pass: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    height: 22,
+    width: 24,
+  },
+  passBox: {
+    borderRadius: 2,
+    borderWidth: 2,
+    height: 14,
+    width: 8,
+  },
+  passArrow: {
+    height: 2,
+    marginHorizontal: 2,
+    width: 6,
   },
   tool: {
     borderRadius: 1,

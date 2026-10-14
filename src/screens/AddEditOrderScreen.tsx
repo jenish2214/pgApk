@@ -28,6 +28,7 @@ import DateTimeField from '../components/DateTimeField';
 import EmptyState from '../components/EmptyState';
 import Screen from '../components/Screen';
 import {createCustomer, listCustomers} from '../services/customerService';
+import {jangadTagNumbers} from '../services/jangadService';
 import {shopTagNumbers} from '../services/inquiryService';
 import {createOrder, getOrder, orderTagNumbers, saveOrder} from '../services/orderService';
 import {PRODUCT_CATEGORIES} from '../utils/categories';
@@ -66,7 +67,12 @@ const EMPTY_PIECE: OrderPieceInput = {
 
 function suggestedTag(used: string[] = []): string {
   try {
-    return nextTagNumber([...shopTagNumbers(), ...orderTagNumbers(), ...used]);
+    return nextTagNumber([
+      ...shopTagNumbers(),
+      ...orderTagNumbers(),
+      ...jangadTagNumbers(),
+      ...used,
+    ]);
   } catch {
     return '1001';
   }

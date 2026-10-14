@@ -36,10 +36,20 @@ export default function DialogHost() {
             {request.lines.map((line, index) => {
               const colon = line.indexOf(':');
               const head = colon > 0 ? line.slice(0, colon) : '';
-              const labeled = head === 'Date and time' || head === 'From' || head === 'To';
-              const shown = labeled
-                ? `${t(head)}: ${t(line.slice(colon + 1).trim())}`
-                : t(line);
+              const piece = head.match(/^Piece (\d+)$/);
+              const labeled =
+                head === 'Date and time' ||
+                head === 'From' ||
+                head === 'To' ||
+                head === 'Given by' ||
+                head === 'Received by' ||
+                head === 'Entry' ||
+                head === 'Exit';
+              const shown = piece
+                ? `${t('Piece {number}', {number: piece[1]})}: ${line.slice(colon + 1).trim()}`
+                : labeled
+                  ? `${t(head)}: ${t(line.slice(colon + 1).trim())}`
+                  : t(line);
               const when = head === 'Date and time';
               return (
               <Text
