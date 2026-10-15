@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {Modal, Pressable, StyleSheet, Text, View} from 'react-native';
 import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
-import {gap, radius} from '../theme/layout';
+import {capped, gap, radius, sheetMax} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
 import {important, face} from '../theme/type';
 import {subscribeDialog, type DialogRequest} from '../utils/confirm';
@@ -105,6 +105,7 @@ const styles = StyleSheet.create({
     borderTopColor: colors.gold,
     borderTopWidth: 3,
     borderWidth: 1,
+    ...capped(sheetMax),
     paddingHorizontal: padX,
     paddingVertical: padY,
   },

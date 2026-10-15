@@ -60,6 +60,7 @@ export const hi: Record<string, string> = {
   'Turn this off to keep the alert quiet.': 'अलर्ट शांत रखने के लिए इसे बंद करें।',
   'Test order alert': 'ऑर्डर अलर्ट जाँचें',
   'Arrives in 2 seconds.': '2 सेकंड में आएगा।',
+  'Arrives in 2 seconds. Siren stops after 2 seconds.': '2 सेकंड में आएगा। सायरन 2 सेकंड बाद बंद हो जाएगा।',
   'Notification permission': 'सूचना अनुमति',
   'These reminders are stored on this phone. They are not internet messages.':
     'ये रिमाइंडर इस फ़ोन पर रखे जाते हैं। ये इंटरनेट संदेश नहीं हैं।',
@@ -277,6 +278,8 @@ export const hi: Record<string, string> = {
   'Stone setting': 'पत्थर जड़ना',
   Chain: 'चेन',
   'Order placed': 'ऑर्डर हुआ',
+  'Order updated': 'ऑर्डर बदला गया',
+  'Status changed': 'स्थिति बदली',
   Preparing: 'तैयारी',
   'Ready for collection': 'लेने के लिए तैयार',
   'Delivery is late': 'डिलीवरी लेट है',

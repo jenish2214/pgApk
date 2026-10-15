@@ -30,7 +30,7 @@ import {
 } from '../services/orderSiren';
 import {isShopEmail, readProfile, writeProfile, type ShopProfile} from '../services/profileService';
 import {colors} from '../theme/colors';
-import {cardLift, radius} from '../theme/layout';
+import {capped, cardLift, radius, sheetMax} from '../theme/layout';
 import {padX, spacing} from '../theme/spacing';
 import {text, face} from '../theme/type';
 import {useColors} from '../theme/ThemeProvider';
@@ -256,7 +256,7 @@ export default function ManageScreen(_props: Props) {
               <View style={styles.copy}>
                 <Text style={[styles.title, {color: palette.ink}]}>{t('Test order alert')}</Text>
                 <Text style={[styles.detail, {color: palette.muted}]}>
-                  {t('Arrives in 2 seconds.')}
+                  {t('Arrives in 2 seconds. Siren stops after 2 seconds.')}
                 </Text>
               </View>
               <Text style={[styles.chevron, {color: palette.muted}]}>{testing ? '…' : '›'}</Text>
@@ -418,6 +418,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radius,
     borderTopRightRadius: radius,
     maxHeight: '90%',
+    ...capped(sheetMax),
   },
   sheetBody: {
     gap: spacing.md,

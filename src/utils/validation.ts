@@ -146,7 +146,7 @@ export function validateRepair(input: RepairInput): FieldErrors {
   if (
     pieces.some(piece => {
       const weight = String(piece.weight || '').trim();
-      return !weight || Number.isNaN(Number(weight)) || Number(weight) <= 0;
+      return !weight || !Number.isFinite(Number(weight)) || Number(weight) <= 0;
     })
   ) {
     errors.weight = 'Enter the weight in grams for every piece.';

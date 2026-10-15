@@ -60,6 +60,7 @@ export const gu: Record<string, string> = {
   'Turn this off to keep the alert quiet.': 'અલર્ટ શાંત રાખવા આ બંધ કરો.',
   'Test order alert': 'ઓર્ડર અલર્ટ ચકાસો',
   'Arrives in 2 seconds.': '2 સેકન્ડમાં આવશે.',
+  'Arrives in 2 seconds. Siren stops after 2 seconds.': '2 સેકન્ડમાં આવશે. સાયરન 2 સેકન્ડ પછી બંધ થશે.',
   'Notification permission': 'સૂચના પરવાનગી',
   'These reminders are stored on this phone. They are not internet messages.':
     'આ રિમાઇન્ડર આ ફોન પર સચવાય છે. આ ઇન્ટરનેટ સંદેશા નથી.',
@@ -277,6 +278,8 @@ export const gu: Record<string, string> = {
   'Stone setting': 'પથ્થર જડવો',
   Chain: 'ચેઇન',
   'Order placed': 'ઓર્ડર થયો',
+  'Order updated': 'ઓર્ડર બદલાયો',
+  'Status changed': 'સ્થિતિ બદલાઈ',
   Preparing: 'તૈયારી',
   'Ready for collection': 'લેવા માટે તૈયાર',
   'Delivery is late': 'ડિલિવરી મોડી છે',

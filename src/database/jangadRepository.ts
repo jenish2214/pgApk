@@ -11,7 +11,7 @@ import type {
   SqlRow,
 } from '../types';
 import {JANGAD_DIRECTIONS, JANGAD_STATUSES} from '../types';
-import {groupByParent, rowsOf} from './rows';
+import {groupByParent, likeTerm, rowsOf} from './rows';
 
 function blankToNull(value: string | null | undefined): string | null {
   const text = String(value || '').trim();
@@ -233,16 +233,16 @@ export function getJangadById(executor: SqlExecutor, id: number): Jangad | null 
 }
 
 export function searchJangads(executor: SqlExecutor, query = '', status = ''): Jangad[] {
-  const term = `%${String(query || '').trim()}%`;
+  const term = likeTerm(query);
   const hasQuery = String(query || '').trim().length > 0;
   const statusFilter = (JANGAD_STATUSES as readonly string[]).includes(status) ? status : '';
   const rows = rowsOf(
     executor.execute(
       `SELECT * FROM jangads
-       WHERE ((? = 0) OR shop_name LIKE ? OR given_by LIKE ? OR received_by LIKE ? OR note LIKE ?
+       WHERE ((? = 0) OR shop_name LIKE ? ESCAPE '\\' OR given_by LIKE ? ESCAPE '\\' OR received_by LIKE ? ESCAPE '\\' OR note LIKE ? ESCAPE '\\'
           OR id IN (
             SELECT jangad_id FROM jangad_items
-            WHERE tag_number LIKE ? OR item_name LIKE ?
+            WHERE tag_number LIKE ? ESCAPE '\\' OR item_name LIKE ? ESCAPE '\\'
           ))
          AND (? = '' OR status = ?)
        ORDER BY CASE status WHEN 'Given' THEN 0 ELSE 1 END, handed_at DESC, id DESC`,

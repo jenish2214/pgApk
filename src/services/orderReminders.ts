@@ -353,23 +353,36 @@ export async function sendTestNotification(): Promise<TestNotice> {
   }
 }
 
-const ARRIVAL_CHANNEL_ID = 'pragati-order-arrival';
+const ARRIVAL_CHANNEL_ID = 'pragati-order-arrival-quiet';
+const ARRIVAL_ID = 'pragati-order-arrival';
+/** The Settings test only needs a short burst; real order alarms keep the user's alarm length. */
+const TEST_SIREN_MS = 2000;
 let orderAlertTestToken = 0;
 let orderAlertTestTimer: ReturnType<typeof setTimeout> | undefined;
-let orderAlertTestId = '';
 
+/** No channel sound: the siren is the sound, and a second sound makes this phone fade the siren out. */
 async function ensureArrivalChannel(): Promise<void> {
+  await notifee.deleteChannel('pragati-order-arrival').catch(() => undefined);
   await notifee.createChannel({
     id: ARRIVAL_CHANNEL_ID,
     name: 'Order arrived',
     description: 'A new shop order pops up on screen. The siren uses the phone alarm volume.',
     importance: AndroidImportance.HIGH,
-    sound: 'default',
     vibration: true,
     vibrationPattern: WARNING_VIBRATION,
-    lights: true,
-    lightColor: '#1A73E8',
   });
+}
+
+async function notificationsAllowed(): Promise<boolean> {
+  const current = await notifee.getNotificationSettings();
+  if (current.authorizationStatus === AuthorizationStatus.AUTHORIZED) {
+    return true;
+  }
+  if (current.authorizationStatus === AuthorizationStatus.DENIED) {
+    return false;
+  }
+  const asked = await notifee.requestPermission({alert: true, sound: true, badge: false});
+  return asked.authorizationStatus !== AuthorizationStatus.DENIED;
 }
 
 function arrivalTestCopy(): {title: string; body: string} {
@@ -407,13 +420,12 @@ export function scheduleOrderAlertTest(): Promise<TestNotice> {
         resolve(result);
       }
     };
-    notifee
-      .requestPermission({alert: true, sound: true, badge: false})
-      .then(async settings => {
+    notificationsAllowed()
+      .then(async allowed => {
         if (token !== orderAlertTestToken) {
           return;
         }
-        if (settings.authorizationStatus === AuthorizationStatus.DENIED) {
+        if (!allowed) {
           finish('denied');
           return;
         }
@@ -424,61 +436,54 @@ export function scheduleOrderAlertTest(): Promise<TestNotice> {
             return;
           }
           const copy = arrivalTestCopy();
-          const id = `pragati-order-arrival-${Date.now()}`;
-          const previous = orderAlertTestId;
-          orderAlertTestId = id;
           const language = getActiveLanguage();
-          const show = previous
-            ? notifee.cancelNotification(previous).catch(() => undefined)
-            : Promise.resolve();
           const sirenOn = orderSirenEnabled();
-          const sound = sirenOn
-            ? startSirenTone(alarmDurationMs()).catch(() => 'unavailable' as const)
-            : Promise.resolve(null);
-          show
-            .then(() =>
-              notifee.displayNotification({
-                id,
-                title: copy.title,
-                body: copy.body,
-                android: {
-                  channelId: ARRIVAL_CHANNEL_ID,
-                  category: AndroidCategory.ALARM,
-                  importance: AndroidImportance.HIGH,
-                  visibility: AndroidVisibility.PUBLIC,
-                  lightUpScreen: true,
-                  pressAction: {id: 'default', launchActivity: 'default'},
-                  autoCancel: true,
-                  showTimestamp: true,
-                  color: '#1A73E8',
-                  sound: 'default',
-                  vibrationPattern: WARNING_VIBRATION,
-                  style: {type: AndroidStyle.BIGTEXT, text: copy.body},
-                  actions: [
-                    {
-                      title: translate(language, 'Stop alarm'),
-                      pressAction: {id: 'stop'},
-                    },
-                  ],
-                },
-                ios: {
-                  sound: 'default',
-                  interruptionLevel: 'timeSensitive',
-                  foregroundPresentationOptions: {alert: true, badge: false, sound: true},
-                },
-              }),
-            )
-            .then(async () => {
-              const tone = await sound;
-              if (!sirenOn) {
-                finish('sent-quiet');
-                return;
-              }
-              finish(tone === 'silent' ? 'sent-silent' : 'sent');
+          notifee
+            .displayNotification({
+              id: ARRIVAL_ID,
+              title: copy.title,
+              body: copy.body,
+              android: {
+                channelId: ARRIVAL_CHANNEL_ID,
+                category: AndroidCategory.ALARM,
+                importance: AndroidImportance.HIGH,
+                visibility: AndroidVisibility.PUBLIC,
+                lightUpScreen: true,
+                pressAction: {id: 'default', launchActivity: 'default'},
+                autoCancel: true,
+                showTimestamp: true,
+                color: '#1A73E8',
+                vibrationPattern: WARNING_VIBRATION,
+                style: {type: AndroidStyle.BIGTEXT, text: copy.body},
+                actions: [
+                  {
+                    title: translate(language, 'Stop alarm'),
+                    pressAction: {id: 'stop'},
+                  },
+                ],
+              },
+              ios: {
+                interruptionLevel: 'timeSensitive',
+                foregroundPresentationOptions: {alert: true, badge: false, sound: false},
+              },
             })
             .catch((error: unknown) => {
               console.warn('Order alert test could not be shown', error);
-              finish('failed');
+              return 'failed' as const;
+            })
+            .then(async shown => {
+              if (!sirenOn) {
+                finish(shown === 'failed' ? 'failed' : 'sent-quiet');
+                return;
+              }
+              const tone = await startSirenTone(TEST_SIREN_MS).catch(
+                () => 'unavailable' as const,
+              );
+              if (shown === 'failed') {
+                finish('failed');
+                return;
+              }
+              finish(tone === 'silent' ? 'sent-silent' : 'sent');
             });
         }, 2000);
       })

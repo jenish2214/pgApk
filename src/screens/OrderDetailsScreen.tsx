@@ -16,6 +16,7 @@ import {confirmAction, showNotice} from '../utils/confirm';
 import {formatDay, formatWhen} from '../utils/dates';
 import {ORDER_STATUSES, READY_STATUS} from '../utils/orderStatus';
 import {buildReadyMessage, callCustomer, openWhatsApp} from '../utils/whatsappUtils';
+import {alertDetail, eventDetail} from '../i18n/alertDetail';
 import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {gap, radius} from '../theme/layout';
@@ -181,8 +182,8 @@ export default function OrderDetailsScreen({navigation, route}: Props) {
       ))}
       {employeeAlerts([order]).map(alert => (
         <View key={alert.title} style={styles.alert}>
-          <Text style={styles.alertTitle}>{alert.title}</Text>
-          <Text style={styles.alertDetail}>{alert.detail}</Text>
+          <Text style={styles.alertTitle}>{t(alert.title)}</Text>
+          <Text style={styles.alertDetail}>{alertDetail(alert.detail, t)}</Text>
         </View>
       ))}
       <Text style={styles.number}>{order.orderNumber}</Text>
@@ -203,8 +204,8 @@ export default function OrderDetailsScreen({navigation, route}: Props) {
       <Text style={styles.section}>{t('Tracking')}</Text>
       {events.map(event => (
         <View key={event.id} style={styles.event}>
-          <Text style={styles.eventLabel}>{event.label}</Text>
-          <Text style={styles.eventDetail}>{event.detail || '—'}</Text>
+          <Text style={styles.eventLabel}>{t(event.label)}</Text>
+          <Text style={styles.eventDetail}>{event.detail ? eventDetail(event.detail, t) : '—'}</Text>
           <Text style={styles.eventWhen}>{formatWhen(event.happenedAt)}</Text>
         </View>
       ))}

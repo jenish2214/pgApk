@@ -22,6 +22,7 @@ import {useDebouncedValue} from '../utils/useDebouncedValue';
 import {PRODUCT_CATEGORIES} from '../utils/categories';
 import {employeeAlerts, type EmployeeAlert} from '../utils/orderAlerts';
 import {ORDER_STATUSES} from '../utils/orderStatus';
+import {alertDetail} from '../i18n/alertDetail';
 import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {gap, radius} from '../theme/layout';
@@ -29,38 +30,6 @@ import {padX, padY, spacing} from '../theme/spacing';
 import {important, face} from '../theme/type';
 
 type Props = NativeStackScreenProps<ShopStackParamList, 'Orders'>;
-
-function alertDetail(
-  detail: string,
-  t: (source: string, values?: Record<string, string | number>) => string,
-): string {
-  const collect = detail.match(/^(.*) can collect (.*)\. (.*)$/);
-  if (collect) {
-    return t('{who} can collect {piece}. {number}', {
-      who: collect[1],
-      piece: collect[2],
-      number: collect[3],
-    });
-  }
-  const late = detail.match(/^(.*), (.*), was due (.*)\. (.*)$/);
-  if (late) {
-    return t('{who}, {piece}, was due {due}. {number}', {
-      who: late[1],
-      piece: late[2],
-      due: late[3],
-      number: late[4],
-    });
-  }
-  const due = detail.match(/^(.*), (.*), is expected today\. (.*)$/);
-  if (due) {
-    return t('{who}, {piece}, is expected today. {number}', {
-      who: due[1],
-      piece: due[2],
-      number: due[3],
-    });
-  }
-  return t(detail);
-}
 
 export default function OrdersScreen({navigation, route}: Props) {
   const {t} = useLanguage();

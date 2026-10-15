@@ -11,13 +11,14 @@ import {colors} from '../theme/colors';
 import {useColors} from '../theme/ThemeProvider';
 import {spacing} from '../theme/spacing';
 import {display, important, regular, text, face} from '../theme/type';
-import {radius} from '../theme/layout';
+import {capped, contentMax, radius} from '../theme/layout';
 
 const FORM_SCREENS = new Set([
   'AddEditOrder',
   'AddEditCustomer',
   'AddEditInquiry',
   'AddEditRepair',
+  'AddEditJangad',
 ]);
 
 function focusedScreenName(state: BottomTabBarProps['state']): string {
@@ -170,6 +171,7 @@ const styles = StyleSheet.create({
   row: {
     backgroundColor: colors.white,
     flexDirection: 'row',
+    ...capped(contentMax),
     paddingHorizontal: spacing.xs,
     paddingVertical: spacing.xs,
   },

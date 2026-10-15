@@ -62,7 +62,7 @@ export function nextOrderNumber(executor: SqlExecutor): string {
       `SELECT order_number
        FROM orders
        WHERE order_number LIKE ?
-       ORDER BY order_number DESC
+       ORDER BY LENGTH(order_number) DESC, order_number DESC
        LIMIT 1`,
       [`${prefix}%`],
     ),

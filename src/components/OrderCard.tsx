@@ -31,12 +31,16 @@ function OrderCard({
         <Image source={categoryImage(order.category)} style={styles.photo} />
         <View style={styles.copy}>
           <View style={styles.row}>
-            <Text style={styles.number}>{order.orderNumber}</Text>
+            <Text style={styles.number} numberOfLines={1}>
+              {order.orderNumber}
+            </Text>
             <StatusBadge status={order.status} />
           </View>
-          <Text style={styles.item}>{order.itemName}</Text>
+          <Text style={styles.item} numberOfLines={2}>
+            {order.itemName}
+          </Text>
           <Text style={styles.category}>{t(order.category || 'Other')}</Text>
-          <Text style={styles.customer}>
+          <Text style={styles.customer} numberOfLines={2}>
             {order.customerName || t('Customer')}
             {order.customerPhone ? ` · ${order.customerPhone}` : ''}
           </Text>
@@ -77,10 +81,12 @@ const styles = StyleSheet.create({
   },
   copy: {
     flex: 1,
+    minWidth: 0,
   },
   row: {
     alignItems: 'center',
     flexDirection: 'row',
+    gap: spacing.sm,
     justifyContent: 'space-between',
   },
   category: {
@@ -91,6 +97,7 @@ const styles = StyleSheet.create({
   },
   number: {
     color: colors.gold,
+    flexShrink: 1,
     fontSize: text.meta,
     fontFamily: face.important, fontWeight: '400',
   },

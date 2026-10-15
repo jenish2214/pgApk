@@ -40,7 +40,7 @@ import {hasFieldErrors, validateCustomer, validateOrder} from '../utils/validati
 import {ORDER_STATUSES} from '../utils/orderStatus';
 import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
-import {gap, radius} from '../theme/layout';
+import {capped, gap, radius, sheetMax} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
 import {important, face} from '../theme/type';
 
@@ -729,6 +729,7 @@ const styles = StyleSheet.create({
     borderRadius: radius,
     marginBottom: spacing.lg,
     padding: padX,
+    ...capped(sheetMax),
   },
   sheetTitle: {
     color: colors.ink,

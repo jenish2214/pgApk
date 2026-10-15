@@ -7,7 +7,7 @@ import type {
   SqlExecutor,
   SqlRow,
 } from '../types';
-import {groupByParent, rowsOf} from './rows';
+import {groupByParent, likeTerm, rowsOf} from './rows';
 
 function blankToNull(value: string | null | undefined): string | null {
   const text = String(value || '').trim();
@@ -184,15 +184,15 @@ export function listInquiriesByCustomer(
 }
 
 export function searchInquiries(executor: SqlExecutor, query = ''): Inquiry[] {
-  const term = `%${String(query || '').trim()}%`;
+  const term = likeTerm(query);
   const hasQuery = String(query || '').trim().length > 0;
   const rows = rowsOf(
     executor.execute(
       `SELECT * FROM inquiries
-       WHERE (? = 0) OR customer_name LIKE ? OR phone LIKE ? OR item_name LIKE ?
+       WHERE (? = 0) OR customer_name LIKE ? ESCAPE '\\' OR phone LIKE ? ESCAPE '\\' OR item_name LIKE ? ESCAPE '\\'
           OR id IN (
             SELECT inquiry_id FROM inquiry_items
-            WHERE tag_number LIKE ? OR item_name LIKE ?
+            WHERE tag_number LIKE ? ESCAPE '\\' OR item_name LIKE ? ESCAPE '\\'
           )
        ORDER BY CASE status WHEN 'Waiting' THEN 0 WHEN 'Bought' THEN 1 ELSE 2 END,
                 follow_up_date ASC, id DESC`,

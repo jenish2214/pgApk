@@ -29,3 +29,8 @@ export function groupByParent<T>(
   });
   return groups;
 }
+
+/** Wraps a search term for LIKE so `%`, `_` and `\` match themselves. Pair with ESCAPE '\\'. */
+export function likeTerm(query: string): string {
+  return `%${String(query || '').trim().replace(/[\\%_]/g, char => `\\${char}`)}%`;
+}

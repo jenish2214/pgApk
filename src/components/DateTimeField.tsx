@@ -11,7 +11,7 @@ import {
 import {formatDateTimeValue, formatDateValue, formatDay, parseShopDate} from '../utils/dates';
 import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
-import {gap, radius} from '../theme/layout';
+import {capped, gap, radius, sheetMax} from '../theme/layout';
 import {padY, spacing} from '../theme/spacing';
 import {text, face} from '../theme/type';
 
@@ -226,6 +226,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radius,
     borderTopRightRadius: radius,
     padding: padY,
+    ...capped(sheetMax),
   },
   sheetTitle: {
     color: colors.ink,

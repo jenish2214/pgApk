@@ -8,7 +8,7 @@ import type {
   SqlRow,
 } from '../types';
 import {REPAIR_STATUSES} from '../types';
-import {groupByParent, rowsOf} from './rows';
+import {groupByParent, likeTerm, rowsOf} from './rows';
 
 function blankToNull(value: string | null | undefined): string | null {
   const text = String(value || '').trim();
@@ -189,16 +189,16 @@ export function listRepairsByCustomer(executor: SqlExecutor, customerId: number)
 }
 
 export function searchRepairs(executor: SqlExecutor, query = ''): Repair[] {
-  const term = `%${String(query || '').trim()}%`;
+  const term = likeTerm(query);
   const hasQuery = String(query || '').trim().length > 0;
   const rows = rowsOf(
     executor.execute(
       `SELECT * FROM repairs
-       WHERE (? = 0) OR customer_name LIKE ? OR phone LIKE ? OR address LIKE ?
-          OR item_name LIKE ? OR repair_kind LIKE ? OR metal LIKE ?
+       WHERE (? = 0) OR customer_name LIKE ? ESCAPE '\\' OR phone LIKE ? ESCAPE '\\' OR address LIKE ? ESCAPE '\\'
+          OR item_name LIKE ? ESCAPE '\\' OR repair_kind LIKE ? ESCAPE '\\' OR metal LIKE ? ESCAPE '\\'
           OR id IN (
             SELECT repair_id FROM repair_items
-            WHERE item_name LIKE ? OR repair_kind LIKE ? OR metal LIKE ?
+            WHERE item_name LIKE ? ESCAPE '\\' OR repair_kind LIKE ? ESCAPE '\\' OR metal LIKE ? ESCAPE '\\'
           )
        ORDER BY CASE status
          WHEN 'In repair' THEN 0

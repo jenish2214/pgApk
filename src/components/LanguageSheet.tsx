@@ -2,7 +2,7 @@ import React from 'react';
 import {Modal, Pressable, StyleSheet, Text, View} from 'react-native';
 import type {Language} from '../i18n/active';
 import {colors} from '../theme/colors';
-import {radius} from '../theme/layout';
+import {capped, radius, sheetMax} from '../theme/layout';
 import {padX, spacing} from '../theme/spacing';
 import {text, face} from '../theme/type';
 
@@ -65,6 +65,7 @@ const styles = StyleSheet.create({
     borderRadius: radius,
     marginBottom: spacing.lg,
     padding: spacing.lg,
+    ...capped(sheetMax),
   },
   title: {
     color: colors.ink,
