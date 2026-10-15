@@ -24,8 +24,8 @@ import {subscribeShopChanges} from '../services/shopEvents';
 import {colors} from '../theme/colors';
 import {useColors} from '../theme/ThemeProvider';
 import {radius} from '../theme/layout';
-import {padX, padY, spacing} from '../theme/spacing';
-import {important, face} from '../theme/type';
+import {spacing} from '../theme/spacing';
+import {text, face} from '../theme/type';
 import TabIcon from './TabIcon';
 
 function openDrawerTarget(navigation: NavigationProp<ParamListBase>, target: DrawerTarget) {
@@ -128,16 +128,21 @@ function ManageDrawer({visible, onClose}: {visible: boolean; onClose: () => void
             styles.drawer,
             {
               width: drawerWidth,
-              backgroundColor: palette.ivory,
-              paddingTop: insets.top + padY,
-              paddingBottom: Math.max(insets.bottom, padY),
+              backgroundColor: palette.white,
+              paddingTop: insets.top + spacing.md,
+              paddingBottom: Math.max(insets.bottom, spacing.lg),
               transform: [{translateX: translate}],
             },
           ]}>
-          <View style={styles.drawerHead}>
+          <View style={[styles.drawerHead, {borderBottomColor: palette.line}]}>
             <Text style={[styles.drawerTitle, {color: palette.ink}]}>{t('Menu')}</Text>
-            <Pressable accessibilityRole="button" accessibilityLabel={t('Close')} onPress={onClose} hitSlop={8}>
-              <Text style={styles.close}>{t('Close')}</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('Close')}
+              onPress={onClose}
+              hitSlop={8}
+              style={({pressed}) => [styles.closeButton, pressed && styles.rowPressed]}>
+              <Text style={[styles.closeMark, {color: palette.ink}]}>×</Text>
             </Pressable>
           </View>
           <ScrollView contentContainerStyle={styles.list}>
@@ -184,18 +189,24 @@ function DrawerRow({
       onPress={onPress}
       style={({pressed}) => [
         styles.row,
-        {backgroundColor: palette.white, borderColor: selected ? colors.green : palette.line},
+        selected && {backgroundColor: palette.greenSoft},
         pressed && styles.rowPressed,
       ]}>
-      <View style={styles.icon}>
+      <View style={[styles.icon, {backgroundColor: selected ? palette.white : palette.greenSoft}]}>
         <TabIcon name={option.icon} color={colors.green} />
       </View>
       <View style={styles.copy}>
-        <Text style={[styles.title, {color: palette.ink}]}>{t(option.title)}</Text>
-        <Text style={[styles.detail, {color: palette.muted}]}>{t(option.detail)}</Text>
+        <Text style={[styles.title, {color: selected ? colors.green : palette.ink}]} numberOfLines={1}>
+          {t(option.title)}
+        </Text>
+        <Text style={[styles.detail, {color: palette.muted}]} numberOfLines={1}>
+          {t(option.detail)}
+        </Text>
       </View>
-      {count != null ? (
-        <Text style={count > 0 ? styles.count : styles.countQuiet}>{count}</Text>
+      {count != null && count > 0 ? (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{count > 99 ? '99+' : count}</Text>
+        </View>
       ) : null}
     </Pressable>
   );
@@ -223,10 +234,10 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(15, 58, 46, 0.45)',
+    backgroundColor: 'rgba(32, 33, 36, 0.4)',
   },
   drawer: {
-    backgroundColor: colors.ivory,
+    backgroundColor: colors.white,
     bottom: 0,
     elevation: 12,
     left: 0,
@@ -239,85 +250,91 @@ const styles = StyleSheet.create({
   },
   drawerHead: {
     alignItems: 'center',
+    borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingBottom: padY,
-    paddingHorizontal: padX,
+    marginBottom: spacing.md,
+    minHeight: 48,
+    paddingBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
   drawerTitle: {
     color: colors.ink,
-    fontSize: 18,
-    fontFamily: face.important, fontWeight: '400',
+    fontSize: text.title,
+    fontFamily: face.display, fontWeight: '400',
   },
-  close: {
-    color: colors.green,
-    fontSize: 14,
-    fontFamily: face.important, fontWeight: '400',
+  closeButton: {
+    alignItems: 'center',
+    borderRadius: radius,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  closeMark: {
+    fontSize: text.title,
+    fontFamily: face.regular, fontWeight: '400',
+    lineHeight: text.title,
   },
   list: {
     paddingBottom: spacing.lg,
-    paddingHorizontal: padX,
+    paddingHorizontal: spacing.md,
   },
   section: {
     color: colors.muted,
-    fontSize: 12,
+    fontSize: text.small,
     fontFamily: face.important, fontWeight: '400',
     letterSpacing: 0.4,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
+    marginLeft: spacing.sm,
     marginTop: spacing.xs,
   },
   row: {
     alignItems: 'center',
-    backgroundColor: colors.white,
-    borderColor: colors.line,
     borderRadius: radius,
-    borderWidth: 1,
     flexDirection: 'row',
-    marginBottom: spacing.sm,
-    paddingHorizontal: padY,
-    paddingVertical: padY,
-  },
-  rowOn: {
-    borderColor: colors.green,
+    gap: spacing.md,
+    marginBottom: spacing.xs,
+    minHeight: 64,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   rowPressed: {
     backgroundColor: colors.ivory,
   },
   icon: {
     alignItems: 'center',
-    height: 28,
+    borderRadius: radius,
+    height: 40,
     justifyContent: 'center',
-    width: 28,
+    width: 40,
   },
   copy: {
     flex: 1,
-    marginLeft: padY,
+    gap: spacing.xs,
     minWidth: 0,
   },
   title: {
     color: colors.ink,
-    fontSize: 16,
+    fontSize: text.section,
     fontFamily: face.important, fontWeight: '400',
   },
   detail: {
     color: colors.muted,
-    fontSize: 13,
-    marginTop: 2,
+    fontSize: text.meta,
+    fontFamily: face.regular, fontWeight: '400',
   },
-  count: {
-    color: colors.green,
-    fontSize: 18,
-    fontFamily: face.important, fontWeight: '400',
-    marginLeft: spacing.sm,
+  badge: {
+    alignItems: 'center',
+    backgroundColor: colors.green,
+    borderRadius: radius,
+    justifyContent: 'center',
     minWidth: 24,
-    textAlign: 'right',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
   },
-  countQuiet: {
-    color: colors.muted,
-    fontSize: 18,
+  badgeText: {
+    color: colors.white,
+    fontSize: text.small,
     fontFamily: face.important, fontWeight: '400',
-    marginLeft: spacing.sm,
-    minWidth: 24,
-    textAlign: 'right',
   },
 });

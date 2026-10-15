@@ -67,7 +67,8 @@ function deviceSiren(): SirenNative | null {
 const SIREN_CHANNEL_ID = 'pragati-alarm';
 const SIREN_ID = 'pragati-order-siren';
 const VISIBLE_ALERT_ID = 'pragati-shop-alert';
-const SIREN_VIBRATION = [0, 700, 180, 700, 180, 700, 180, 900];
+/** Notifee rejects a zero entry, so the pattern starts with a short pause. */
+const SIREN_VIBRATION = [100, 700, 180, 700, 180, 700, 180, 900];
 
 let sirenStop: ReturnType<typeof setTimeout> | undefined;
 
@@ -122,7 +123,12 @@ export function setAlarmSnoozeMinutes(minutes: number): void {
 }
 
 export function shouldStopSiren(id?: string): boolean {
-  return id === SIREN_ID || id === VISIBLE_ALERT_ID || shopAlertPlaysSiren(id);
+  return (
+    id === SIREN_ID ||
+    id === VISIBLE_ALERT_ID ||
+    shopAlertPlaysSiren(id) ||
+    (id?.startsWith('pragati-order-arrival') ?? false)
+  );
 }
 
 export function stopOrderSiren(): void {

@@ -2,6 +2,7 @@ import notifee, {
   AndroidCategory,
   AndroidImportance,
   AndroidNotificationSetting,
+  AndroidStyle,
   AndroidVisibility,
   AuthorizationStatus,
   EventType,
@@ -54,8 +55,8 @@ export function isPreparationSiren(id?: string): boolean {
   return PREPARATION_SIREN_HOURS.some(hour => preparationSirenId(hour) === id);
 }
 
-/** Same pulse as the test siren, so a reminder is hard to miss. */
-const WARNING_VIBRATION = [0, 700, 180, 700, 180, 700, 180, 900];
+/** Same pulse as the test siren. Notifee rejects a zero entry, so it starts with a short pause. */
+const WARNING_VIBRATION = [100, 700, 180, 700, 180, 700, 180, 900];
 const VISIBLE_ALERT_ID = 'pragati-shop-alert';
 
 function alarmContent(id: string, title: string, body: string) {
@@ -352,6 +353,142 @@ export async function sendTestNotification(): Promise<TestNotice> {
   }
 }
 
+const ARRIVAL_CHANNEL_ID = 'pragati-order-arrival';
+let orderAlertTestToken = 0;
+let orderAlertTestTimer: ReturnType<typeof setTimeout> | undefined;
+let orderAlertTestId = '';
+
+async function ensureArrivalChannel(): Promise<void> {
+  await notifee.createChannel({
+    id: ARRIVAL_CHANNEL_ID,
+    name: 'Order arrived',
+    description: 'A new shop order pops up on screen. The siren uses the phone alarm volume.',
+    importance: AndroidImportance.HIGH,
+    sound: 'default',
+    vibration: true,
+    vibrationPattern: WARNING_VIBRATION,
+    lights: true,
+    lightColor: '#1A73E8',
+  });
+}
+
+function arrivalTestCopy(): {title: string; body: string} {
+  const language = getActiveLanguage();
+  const open = listOrders().filter(
+    order => order.status !== 'Delivered' && order.status !== 'Cancelled',
+  );
+  const order = open.find(item => item.status === 'Ready for Collection') ?? open[0];
+  const title = translate(language, 'New order arrived');
+  if (!order) {
+    return {
+      title,
+      body: [translate(language, 'Customer'), `${translate(language, 'Necklace')} · A1001`].join('\n'),
+    };
+  }
+  const who = order.customerName.trim() || translate(language, 'Customer');
+  const phone = order.customerPhone.trim();
+  const item = order.itemName.trim() || translate(language, 'Jewellery');
+  return {
+    title,
+    body: [phone ? `${who} · ${phone}` : who, `${item} · ${order.orderNumber}`].join('\n'),
+  };
+}
+
+/** Pops an order-arrived alert after 2 seconds and plays the siren when that switch is on. */
+export function scheduleOrderAlertTest(): Promise<TestNotice> {
+  const token = ++orderAlertTestToken;
+  if (orderAlertTestTimer) {
+    clearTimeout(orderAlertTestTimer);
+    orderAlertTestTimer = undefined;
+  }
+  return new Promise(resolve => {
+    const finish = (result: TestNotice) => {
+      if (token === orderAlertTestToken) {
+        resolve(result);
+      }
+    };
+    notifee
+      .requestPermission({alert: true, sound: true, badge: false})
+      .then(async settings => {
+        if (token !== orderAlertTestToken) {
+          return;
+        }
+        if (settings.authorizationStatus === AuthorizationStatus.DENIED) {
+          finish('denied');
+          return;
+        }
+        await ensureArrivalChannel();
+        orderAlertTestTimer = setTimeout(() => {
+          orderAlertTestTimer = undefined;
+          if (token !== orderAlertTestToken) {
+            return;
+          }
+          const copy = arrivalTestCopy();
+          const id = `pragati-order-arrival-${Date.now()}`;
+          const previous = orderAlertTestId;
+          orderAlertTestId = id;
+          const language = getActiveLanguage();
+          const show = previous
+            ? notifee.cancelNotification(previous).catch(() => undefined)
+            : Promise.resolve();
+          const sirenOn = orderSirenEnabled();
+          const sound = sirenOn
+            ? startSirenTone(alarmDurationMs()).catch(() => 'unavailable' as const)
+            : Promise.resolve(null);
+          show
+            .then(() =>
+              notifee.displayNotification({
+                id,
+                title: copy.title,
+                body: copy.body,
+                android: {
+                  channelId: ARRIVAL_CHANNEL_ID,
+                  category: AndroidCategory.ALARM,
+                  importance: AndroidImportance.HIGH,
+                  visibility: AndroidVisibility.PUBLIC,
+                  lightUpScreen: true,
+                  pressAction: {id: 'default', launchActivity: 'default'},
+                  autoCancel: true,
+                  showTimestamp: true,
+                  color: '#1A73E8',
+                  sound: 'default',
+                  vibrationPattern: WARNING_VIBRATION,
+                  style: {type: AndroidStyle.BIGTEXT, text: copy.body},
+                  actions: [
+                    {
+                      title: translate(language, 'Stop alarm'),
+                      pressAction: {id: 'stop'},
+                    },
+                  ],
+                },
+                ios: {
+                  sound: 'default',
+                  interruptionLevel: 'timeSensitive',
+                  foregroundPresentationOptions: {alert: true, badge: false, sound: true},
+                },
+              }),
+            )
+            .then(async () => {
+              const tone = await sound;
+              if (!sirenOn) {
+                finish('sent-quiet');
+                return;
+              }
+              finish(tone === 'silent' ? 'sent-silent' : 'sent');
+            })
+            .catch((error: unknown) => {
+              console.warn('Order alert test could not be shown', error);
+              finish('failed');
+            });
+        }, 2000);
+      })
+      .catch((error: unknown) => {
+        console.warn('Order alert test could not start', error);
+        finish('failed');
+      });
+  });
+}
+
 /** After a warning is delivered, queue the next alarm with fresh shop records. */
 export function watchOrderReminder(): () => void {
   return notifee.onForegroundEvent(({type, detail}) => {
@@ -361,7 +498,12 @@ export function watchOrderReminder(): () => void {
     }
     if (type === EventType.DISMISSED) {
       const id = detail.notification?.id;
-      if (id === VISIBLE_ALERT_ID || id === 'pragati-order-siren' || shopAlertPlaysSiren(id)) {
+      if (
+        id === VISIBLE_ALERT_ID ||
+        id === 'pragati-order-siren' ||
+        shopAlertPlaysSiren(id) ||
+        id?.startsWith('pragati-order-arrival')
+      ) {
         stopOrderSiren();
       }
       return;

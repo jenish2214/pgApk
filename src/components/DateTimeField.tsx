@@ -13,7 +13,7 @@ import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {gap, radius} from '../theme/layout';
 import {padY, spacing} from '../theme/spacing';
-import {important, regular, text, face} from '../theme/type';
+import {text, face} from '../theme/type';
 
 type Props = {
   label: string;
@@ -30,7 +30,7 @@ export default function DateTimeField({
   value,
   onChange,
   error,
-  placeholder = 'Choose a date',
+  placeholder = 'Tap to choose the day',
   optional = false,
   withTime = false,
 }: Props) {
@@ -71,11 +71,19 @@ export default function DateTimeField({
     commit(selected);
   };
 
+  const help = withTime
+    ? 'Tap to choose the day and time.'
+    : optional
+      ? 'Tap to choose the day. You can skip this.'
+      : 'Tap to choose the day.';
+
   return (
     <View style={styles.wrap}>
       <Text style={[styles.label, error ? styles.labelError : null]}>{t(label)}</Text>
+      {error ? null : <Text style={styles.hint}>{t(help)}</Text>}
       <Pressable
         accessibilityRole="button"
+        accessibilityHint={t(help)}
         onPress={show}
         style={[styles.field, error ? styles.fieldError : null]}>
         <Text
@@ -86,6 +94,7 @@ export default function DateTimeField({
           }>
           {value ? formatDay(value) : t(placeholder)}
         </Text>
+        <Text style={styles.tap}>{t('Tap')}</Text>
       </Pressable>
       {optional && value ? (
         <Pressable accessibilityRole="button" onPress={() => onChange('')} hitSlop={8}>
@@ -141,18 +150,26 @@ const styles = StyleSheet.create({
   },
   label: {
     color: colors.ink,
-    fontSize: text.label,
+    fontSize: text.section,
     fontFamily: face.important, fontWeight: '400',
     marginBottom: spacing.xs,
   },
+  hint: {
+    color: colors.muted,
+    fontSize: text.meta,
+    fontFamily: face.regular, fontWeight: '400',
+    marginBottom: spacing.sm,
+  },
   field: {
+    alignItems: 'center',
     backgroundColor: colors.white,
     borderColor: colors.line,
     borderRadius: radius,
     borderWidth: 1,
-    justifyContent: 'center',
-    minHeight: 48,
-    paddingHorizontal: padY,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    minHeight: 56,
+    paddingHorizontal: spacing.lg,
   },
   labelError: {
     color: colors.danger,
@@ -160,18 +177,32 @@ const styles = StyleSheet.create({
   fieldError: {
     backgroundColor: colors.cancelledBg,
     borderColor: colors.danger,
+    borderWidth: 2,
   },
   valueError: {
     color: colors.danger,
   },
   value: {
     color: colors.ink,
-    fontSize: text.body,
+    flex: 1,
+    fontSize: text.lead,
     fontFamily: face.regular, fontWeight: '400',
   },
   placeholder: {
     color: colors.muted,
-    fontSize: text.body,
+    flex: 1,
+    fontSize: text.lead,
+    fontFamily: face.regular, fontWeight: '400',
+  },
+  tap: {
+    backgroundColor: colors.greenSoft,
+    borderRadius: radius,
+    color: colors.green,
+    fontSize: text.meta,
+    fontFamily: face.important, fontWeight: '400',
+    overflow: 'hidden',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   clear: {
     color: colors.green,
@@ -181,8 +212,9 @@ const styles = StyleSheet.create({
   },
   error: {
     color: colors.danger,
-    fontSize: text.meta,
-    marginTop: spacing.xs,
+    fontSize: text.label,
+    fontFamily: face.regular, fontWeight: '400',
+    marginTop: spacing.sm,
   },
   backdrop: {
     backgroundColor: 'rgba(10, 40, 32, 0.45)',

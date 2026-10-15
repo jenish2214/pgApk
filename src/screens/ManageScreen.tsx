@@ -19,8 +19,15 @@ import Screen from '../components/Screen';
 import ShopHeader from '../components/ShopHeader';
 import {useLanguage} from '../i18n/LanguageProvider';
 import type {Language} from '../i18n/active';
-import {refreshOrderReminder} from '../services/orderReminders';
-import {remindersEnabled, setRemindersEnabled, stopOrderSiren} from '../services/orderSiren';
+import {refreshOrderReminder, scheduleOrderAlertTest} from '../services/orderReminders';
+import {
+  orderSirenEnabled,
+  pushAlarmOptions,
+  remindersEnabled,
+  setOrderSirenEnabled,
+  setRemindersEnabled,
+  stopOrderSiren,
+} from '../services/orderSiren';
 import {isShopEmail, readProfile, writeProfile, type ShopProfile} from '../services/profileService';
 import {colors} from '../theme/colors';
 import {cardLift, radius} from '../theme/layout';
@@ -49,11 +56,15 @@ export default function ManageScreen(_props: Props) {
   const [emailError, setEmailError] = useState('');
   const [photoError, setPhotoError] = useState('');
   const [reminders, setReminders] = useState(true);
+  const [siren, setSiren] = useState(true);
+  const [testing, setTesting] = useState(false);
+  const [reminderNotice, setReminderNotice] = useState('');
   const [notice, setNotice] = useState('');
 
   const loadAlerts = useCallback(() => {
     setProfile(readProfile());
     setReminders(remindersEnabled());
+    setSiren(orderSirenEnabled());
   }, []);
 
   useFocusEffect(
@@ -102,16 +113,56 @@ export default function ManageScreen(_props: Props) {
   async function onRemindersChange(value: boolean) {
     setReminders(value);
     setRemindersEnabled(value);
-    setNotice('');
+    setReminderNotice('');
     if (!value) {
       stopOrderSiren();
     }
     try {
       await refreshOrderReminder();
     } catch {
-      setNotice('The reminder could not be scheduled.');
+      setReminderNotice('The reminder could not be scheduled.');
     }
     loadAlerts();
+  }
+
+  async function onSirenChange(value: boolean) {
+    setSiren(value);
+    setOrderSirenEnabled(value);
+    setNotice('');
+    if (!value) {
+      stopOrderSiren();
+    }
+    try {
+      await pushAlarmOptions();
+    } catch {
+      setNotice('The sound could not be played on this phone.');
+    }
+  }
+
+  async function onTestOrderAlert() {
+    if (testing) {
+      return;
+    }
+    setTesting(true);
+    setNotice('Arrives in 2 seconds.');
+    try {
+      const result = await scheduleOrderAlertTest();
+      if (result === 'sent') {
+        setNotice('Test notification sent.');
+      } else if (result === 'sent-quiet') {
+        setNotice('Test notification sent. Sound is turned off.');
+      } else if (result === 'sent-silent') {
+        setNotice('Test notification sent. Turn up the phone alarm volume to hear it.');
+      } else if (result === 'denied') {
+        setNotice('Notifications are off. Open Android settings and allow notifications for this app.');
+      } else if (result === 'channel-off') {
+        setNotice('The order alarm is turned off in notification settings.');
+      } else {
+        setNotice('The test notification could not be sent.');
+      }
+    } finally {
+      setTesting(false);
+    }
   }
 
   const initial = profile.name.trim().charAt(0).toUpperCase() || 'P';
@@ -175,6 +226,41 @@ export default function ManageScreen(_props: Props) {
                 thumbColor={palette.white}
               />
             </View>
+            {reminderNotice ? (
+              <Text style={[styles.notice, {color: palette.ink}]}>{t(reminderNotice)}</Text>
+            ) : null}
+          </View>
+
+          <Text style={[styles.kicker, {color: palette.muted}]}>{t('Testing')}</Text>
+          <View style={[styles.group, {backgroundColor: palette.white, borderColor: palette.line}]}>
+            <View style={styles.row}>
+              <View style={styles.copy}>
+                <Text style={[styles.title, {color: palette.ink}]}>{t('Siren')}</Text>
+                <Text style={[styles.detail, {color: palette.muted}]}>
+                  {t('Turn this off to keep the alert quiet.')}
+                </Text>
+              </View>
+              <Switch
+                value={siren}
+                onValueChange={onSirenChange}
+                trackColor={{false: palette.line, true: palette.green}}
+                thumbColor={palette.white}
+              />
+            </View>
+            <View style={[styles.hairline, {backgroundColor: palette.line}]} />
+            <Pressable
+              accessibilityRole="button"
+              disabled={testing}
+              onPress={onTestOrderAlert}
+              style={({pressed}) => [styles.row, pressed && !testing && styles.rowPressed]}>
+              <View style={styles.copy}>
+                <Text style={[styles.title, {color: palette.ink}]}>{t('Test order alert')}</Text>
+                <Text style={[styles.detail, {color: palette.muted}]}>
+                  {t('Arrives in 2 seconds.')}
+                </Text>
+              </View>
+              <Text style={[styles.chevron, {color: palette.muted}]}>{testing ? '…' : '›'}</Text>
+            </Pressable>
             {notice ? (
               <Text style={[styles.notice, {color: palette.ink}]}>{t(notice)}</Text>
             ) : null}
