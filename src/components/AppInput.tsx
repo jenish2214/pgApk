@@ -1,10 +1,10 @@
-import React, {type ReactNode} from 'react';
+import React, {useState, type ReactNode} from 'react';
 import {StyleSheet, Text, TextInput, View, type TextInputProps} from 'react-native';
 import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
 import {padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {important, regular, text, face} from '../theme/type';
 
 type Props = {
   label: string;
@@ -32,6 +32,7 @@ export default function AppInput({
   accessory,
 }: Props) {
   const {t} = useLanguage();
+  const [focused, setFocused] = useState(false);
   return (
     <View style={styles.wrap}>
       <Text style={[styles.label, error ? styles.labelError : null]}>{t(label)}</Text>
@@ -46,10 +47,13 @@ export default function AppInput({
           autoCapitalize={autoCapitalize}
           autoCorrect={false}
           secureTextEntry={secureTextEntry}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           style={[
             styles.input,
             multiline && styles.multiline,
             accessory ? styles.withAccessory : null,
+            focused && !error ? styles.inputFocus : null,
             error ? styles.inputError : null,
           ]}
         />
@@ -66,8 +70,8 @@ const styles = StyleSheet.create({
   },
   label: {
     color: colors.ink,
-    fontSize: 14,
-    fontWeight: important,
+    fontSize: text.label,
+    fontFamily: face.important, fontWeight: '400',
     marginBottom: spacing.xs,
   },
   input: {
@@ -76,9 +80,9 @@ const styles = StyleSheet.create({
     borderRadius: radius,
     borderWidth: 1,
     color: colors.ink,
-    fontSize: 15,
-    fontWeight: important,
-    minHeight: 44,
+    fontSize: text.body,
+    fontFamily: face.regular, fontWeight: '400',
+    minHeight: 48,
     paddingHorizontal: padY,
     paddingVertical: spacing.sm,
   },
@@ -99,6 +103,10 @@ const styles = StyleSheet.create({
   labelError: {
     color: colors.danger,
   },
+  inputFocus: {
+    borderColor: colors.green,
+    borderWidth: 1.5,
+  },
   inputError: {
     backgroundColor: colors.cancelledBg,
     borderColor: colors.danger,
@@ -106,7 +114,7 @@ const styles = StyleSheet.create({
   },
   error: {
     color: colors.danger,
-    fontSize: 13,
+    fontSize: text.meta,
     marginTop: spacing.xs,
   },
 });

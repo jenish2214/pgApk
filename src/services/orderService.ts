@@ -15,11 +15,10 @@ import {
   updateOrder,
 } from '../database/orderRepository';
 import type {Order, OrderEvent, OrderInput, OrderPieceInput, OrderStatus} from '../types';
-import {isProductCategory} from '../utils/categories';
 import {nowISO} from '../utils/dates';
 import {formatTagNumber} from '../utils/tags';
 import {isOrderStatus, READY_STATUS} from '../utils/orderStatus';
-import {orderSirenEnabled, playOrderSiren} from './orderSiren';
+import {announceReadyOrder} from './orderSiren';
 import {getActiveLanguage} from '../i18n/active';
 import {translate} from '../i18n/translate';
 import {notifyShopChanged} from './shopEvents';
@@ -51,7 +50,7 @@ function normalizePieces(input: OrderInput): OrderPieceInput[] {
   return source.map(piece => ({
     tagNumber: formatTagNumber(piece.tagNumber),
     itemName: String(piece.itemName || '').trim(),
-    category: isProductCategory(piece.category) ? piece.category : 'Other',
+    category: String(piece.category || '').trim() || 'Other',
     description: String(piece.description || '').trim(),
     imageUri: String(piece.imageUri || '').trim(),
   }));
@@ -125,12 +124,9 @@ function readyTimestamp(
 
 export function getDashboard(): {
   counts: ReturnType<typeof dashboardCounts>;
-  readyOrders: Order[];
 } {
-  const db = getDatabase();
   return {
-    counts: dashboardCounts(db),
-    readyOrders: listReadyOrders(db),
+    counts: dashboardCounts(getDatabase()),
   };
 }
 
@@ -285,10 +281,10 @@ export function changeOrderStatus(
   ).then(result => {
     const order = result?.order ?? null;
     const becameReady = order?.status === 'Ready for Collection';
-    if (order && result && result.previous !== order.status && becameReady && orderSirenEnabled()) {
+    if (order && result && result.previous !== order.status && becameReady) {
       const language = getActiveLanguage();
       const title = 'Ready for collection';
-      playOrderSiren(
+      announceReadyOrder(
         translate(language, title),
         `${order.customerName || translate(language, 'Customer')} · ${order.itemName}`,
       ).catch(() => undefined);

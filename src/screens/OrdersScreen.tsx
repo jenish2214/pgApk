@@ -17,6 +17,8 @@ import PlusButton from '../components/PlusButton';
 import Screen from '../components/Screen';
 import OrderCard from '../components/OrderCard';
 import {listOrders} from '../services/orderService';
+import {listWindow} from '../utils/listWindow';
+import {useDebouncedValue} from '../utils/useDebouncedValue';
 import {PRODUCT_CATEGORIES} from '../utils/categories';
 import {employeeAlerts, type EmployeeAlert} from '../utils/orderAlerts';
 import {ORDER_STATUSES} from '../utils/orderStatus';
@@ -24,7 +26,7 @@ import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {gap, radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {important, face} from '../theme/type';
 
 type Props = NativeStackScreenProps<ShopStackParamList, 'Orders'>;
 
@@ -63,6 +65,7 @@ function alertDetail(
 export default function OrdersScreen({navigation, route}: Props) {
   const {t} = useLanguage();
   const [query, setQuery] = useState('');
+  const settledQuery = useDebouncedValue(query);
   const [status, setStatus] = useState(route.params?.status || '');
   const [category, setCategory] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
@@ -78,22 +81,34 @@ export default function OrdersScreen({navigation, route}: Props) {
   }, [navigation, route.params?.status]);
 
   const load = useCallback(() => {
-    setLoading(true);
     try {
-      setOrders(listOrders(query, status, category));
-      setAlerts(employeeAlerts(listOrders()));
+      setOrders(listOrders(settledQuery, status, category));
       setError('');
     } catch (loadError: unknown) {
       setError(errorMessage(loadError, 'Orders could not be loaded.'));
     } finally {
       setLoading(false);
     }
-  }, [category, query, status]);
+  }, [category, settledQuery, status]);
+
+  const loadAlerts = useCallback(() => {
+    try {
+      setAlerts(employeeAlerts(listOrders()));
+    } catch {
+      setAlerts([]);
+    }
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
       load();
     }, [load]),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      loadAlerts();
+    }, [loadAlerts]),
   );
 
   return (
@@ -102,6 +117,7 @@ export default function OrdersScreen({navigation, route}: Props) {
       <FlatList
         data={orders}
         keyExtractor={item => String(item.id)}
+        {...listWindow}
         contentContainerStyle={styles.list}
         keyboardShouldPersistTaps="handled"
         ListHeaderComponent={
@@ -194,9 +210,12 @@ const styles = StyleSheet.create({
     marginBottom: padY,
   },
   chip: {
+    alignItems: 'center',
     borderColor: colors.line,
     borderRadius: radius,
     borderWidth: 1,
+    justifyContent: 'center',
+    minHeight: 40,
     paddingHorizontal: padY,
     paddingVertical: spacing.sm,
   },
@@ -207,7 +226,7 @@ const styles = StyleSheet.create({
   chipText: {
     color: colors.ink,
     fontSize: 13,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   chipTextSelected: {
     color: colors.cream,
@@ -215,7 +234,7 @@ const styles = StyleSheet.create({
   filterLabel: {
     color: colors.ink,
     fontSize: 13,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginBottom: spacing.sm,
   },
   alert: {
@@ -230,7 +249,7 @@ const styles = StyleSheet.create({
   alertTitle: {
     color: colors.green,
     fontSize: 14,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   alertDetail: {
     color: colors.ink,

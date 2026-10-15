@@ -22,6 +22,11 @@ export function isProductCategory(value: string): value is ProductCategory {
   return (PRODUCT_CATEGORIES as readonly string[]).includes(value);
 }
 
+/** A listed jewellery type, not the Other choice. */
+export function isNamedCategory(value: string): boolean {
+  return isProductCategory(value) && value !== 'Other';
+}
+
 export function categoryImage(category: string): ImageSourcePropType {
   return isProductCategory(category) ? IMAGES[category] : IMAGES.Other;
 }

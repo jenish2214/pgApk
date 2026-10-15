@@ -10,19 +10,22 @@ import PlusButton from '../components/PlusButton';
 import Screen from '../components/Screen';
 import ShopHeader from '../components/ShopHeader';
 import {jangadQuantity, listJangads, returnJangad} from '../services/jangadService';
+import {listWindow} from '../utils/listWindow';
+import {useDebouncedValue} from '../utils/useDebouncedValue';
 import {confirmAction} from '../utils/confirm';
 import {formatDay} from '../utils/dates';
 import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
-import {gap, radius} from '../theme/layout';
+import {cardLift, gap, radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {important, face} from '../theme/type';
 
 type Props = NativeStackScreenProps<ShopStackParamList, 'JangadHome'>;
 
 export default function JangadsScreen({navigation}: Props) {
   const {t} = useLanguage();
   const [query, setQuery] = useState('');
+  const settledQuery = useDebouncedValue(query);
   const [status, setStatus] = useState<'' | JangadStatus>('');
   const [jangads, setJangads] = useState<Jangad[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,16 +33,15 @@ export default function JangadsScreen({navigation}: Props) {
   const [error, setError] = useState('');
 
   const load = useCallback(() => {
-    setLoading(true);
     try {
-      setJangads(listJangads(query, status));
+      setJangads(listJangads(settledQuery, status));
       setError('');
     } catch (loadError: unknown) {
       setError(errorMessage(loadError, 'Jangad slips could not be loaded.'));
     } finally {
       setLoading(false);
     }
-  }, [query, status]);
+  }, [settledQuery, status]);
 
   useFocusEffect(
     useCallback(() => {
@@ -85,6 +87,7 @@ export default function JangadsScreen({navigation}: Props) {
         <FlatList
           data={jangads}
           keyExtractor={item => String(item.id)}
+          {...listWindow}
           contentContainerStyle={styles.list}
           keyboardShouldPersistTaps="handled"
           ListHeaderComponent={
@@ -132,7 +135,7 @@ export default function JangadsScreen({navigation}: Props) {
               <Pressable
                 accessibilityRole="button"
                 onPress={() => navigation.navigate('AddEditJangad', {jangadId: item.id})}
-                style={styles.card}>
+                style={({pressed}) => [styles.card, pressed && styles.pressed]}>
                 <View style={styles.row}>
                   <Text style={styles.name}>{item.shopName}</Text>
                   <Text style={pending ? styles.status : styles.statusQuiet}>
@@ -199,9 +202,12 @@ const styles = StyleSheet.create({
     marginBottom: padY,
   },
   chip: {
+    alignItems: 'center',
     borderColor: colors.line,
     borderRadius: radius,
     borderWidth: 1,
+    justifyContent: 'center',
+    minHeight: 40,
     paddingHorizontal: padY,
     paddingVertical: spacing.sm,
   },
@@ -212,7 +218,7 @@ const styles = StyleSheet.create({
   chipText: {
     color: colors.ink,
     fontSize: 13,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   chipTextSelected: {
     color: colors.cream,
@@ -228,6 +234,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: padY,
     padding: padY,
+    ...cardLift,
+  },
+  pressed: {
+    opacity: 0.86,
   },
   row: {
     alignItems: 'center',
@@ -238,23 +248,23 @@ const styles = StyleSheet.create({
     color: colors.ink,
     flex: 1,
     fontSize: 16,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginRight: spacing.sm,
   },
   status: {
     color: colors.green,
     fontSize: 12,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   statusQuiet: {
     color: colors.muted,
     fontSize: 12,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   item: {
     color: colors.ink,
     fontSize: 15,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginTop: spacing.xs,
   },
   meta: {
@@ -273,6 +283,6 @@ const styles = StyleSheet.create({
   returnText: {
     color: colors.cream,
     fontSize: 13,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
 });

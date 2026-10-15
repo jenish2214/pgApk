@@ -17,6 +17,8 @@ import PlusButton from '../components/PlusButton';
 import Screen from '../components/Screen';
 import ShopHeader from '../components/ShopHeader';
 import {listCustomers} from '../services/customerService';
+import {listWindow} from '../utils/listWindow';
+import {useDebouncedValue} from '../utils/useDebouncedValue';
 import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {padX, padY} from '../theme/spacing';
@@ -26,21 +28,21 @@ type Props = NativeStackScreenProps<ShopStackParamList, 'CustomersHome'>;
 export default function CustomersScreen({navigation}: Props) {
   const {t} = useLanguage();
   const [query, setQuery] = useState('');
+  const settledQuery = useDebouncedValue(query);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const load = useCallback(() => {
-    setLoading(true);
     try {
-      setCustomers(listCustomers(query));
+      setCustomers(listCustomers(settledQuery));
       setError('');
     } catch (loadError: unknown) {
       setError(errorMessage(loadError, 'Customers could not be loaded.'));
     } finally {
       setLoading(false);
     }
-  }, [query]);
+  }, [settledQuery]);
 
   useFocusEffect(
     useCallback(() => {
@@ -55,6 +57,7 @@ export default function CustomersScreen({navigation}: Props) {
       <FlatList
         data={customers}
         keyExtractor={item => String(item.id)}
+        {...listWindow}
         contentContainerStyle={styles.list}
         keyboardShouldPersistTaps="handled"
         ListHeaderComponent={

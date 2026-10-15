@@ -31,7 +31,7 @@ import {createCustomer, listCustomers} from '../services/customerService';
 import {jangadTagNumbers} from '../services/jangadService';
 import {shopTagNumbers} from '../services/inquiryService';
 import {createOrder, getOrder, orderTagNumbers, saveOrder} from '../services/orderService';
-import {PRODUCT_CATEGORIES} from '../utils/categories';
+import {isNamedCategory, PRODUCT_CATEGORIES} from '../utils/categories';
 import {confirmAction} from '../utils/confirm';
 import {formatDay, todayISO} from '../utils/dates';
 import {captureShopPhoto, pickShopImage} from '../utils/pickImage';
@@ -42,7 +42,7 @@ import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {gap, radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {important, face} from '../theme/type';
 
 const EMPTY_CUSTOMER: CustomerInput = {name: '', phone: '', address: '', notes: ''};
 
@@ -446,11 +446,16 @@ export default function AddEditOrderScreen({navigation, route}: Props) {
             </View>
             <View style={styles.statuses}>
               {PRODUCT_CATEGORIES.map(item => {
-                const selected = piece.category === item;
+                const otherOpen = !isNamedCategory(piece.category);
+                const selected = item === 'Other' ? otherOpen : piece.category === item;
                 return (
                   <Pressable
                     key={item}
-                    onPress={() => changePiece(index, {category: item})}
+                    onPress={() =>
+                      changePiece(index, {
+                        category: item === 'Other' ? (otherOpen ? piece.category : '') : item,
+                      })
+                    }
                     style={[styles.chip, selected && styles.chipSelected]}>
                     <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
                       {t(item)}
@@ -459,6 +464,15 @@ export default function AddEditOrderScreen({navigation, route}: Props) {
                 );
               })}
             </View>
+            {!isNamedCategory(piece.category) ? (
+              <AppInput
+                label="Your category"
+                value={piece.category === 'Other' ? '' : piece.category}
+                onChangeText={value => changePiece(index, {category: value})}
+                placeholder="Pendant, bracelet, nose pin"
+                error={fieldErrors.category}
+              />
+            ) : null}
             <AppInput
               label="Jewellery item"
               value={piece.itemName}
@@ -577,7 +591,7 @@ const styles = StyleSheet.create({
   label: {
     color: colors.ink,
     fontSize: 14,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginBottom: spacing.xs,
   },
   sectionRow: {
@@ -610,11 +624,11 @@ const styles = StyleSheet.create({
   },
   customerName: {
     color: colors.ink,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   customerPhone: {
     color: colors.muted,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginTop: spacing.xs,
   },
   customerDetail: {
@@ -639,7 +653,7 @@ const styles = StyleSheet.create({
   addCustomerText: {
     color: colors.green,
     fontSize: 15,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   statuses: {
     flexDirection: 'row',
@@ -648,9 +662,12 @@ const styles = StyleSheet.create({
     marginBottom: padY,
   },
   chip: {
+    alignItems: 'center',
     borderColor: colors.line,
     borderRadius: radius,
     borderWidth: 1,
+    justifyContent: 'center',
+    minHeight: 40,
     paddingHorizontal: padY,
     paddingVertical: spacing.sm,
   },
@@ -665,7 +682,7 @@ const styles = StyleSheet.create({
   chipText: {
     color: colors.ink,
     fontSize: 13,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   chipTextSelected: {
     color: colors.cream,
@@ -676,7 +693,7 @@ const styles = StyleSheet.create({
   pieceTitle: {
     color: colors.ink,
     fontSize: 15,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginBottom: spacing.sm,
   },
   pieceTop: {
@@ -716,7 +733,7 @@ const styles = StyleSheet.create({
   sheetTitle: {
     color: colors.ink,
     fontSize: 18,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   sheetNote: {
     color: colors.muted,
@@ -730,7 +747,7 @@ const styles = StyleSheet.create({
   removePiece: {
     color: colors.danger,
     fontSize: 14,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginBottom: padY,
   },
   error: {

@@ -4,7 +4,7 @@ import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {important, text, face} from '../theme/type';
 import PlusIcon from './PlusIcon';
 
 type Props = {
@@ -23,17 +23,18 @@ export default function PlusButton({
   style,
 }: Props) {
   const {t} = useLanguage();
-  const ink = tone === 'gold' ? colors.greenDeep : colors.cream;
+  const ink = colors.cream;
   const name = t(label);
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={name}
       onPress={onPress}
-      style={[
+      style={({pressed}) => [
         styles.button,
         floating ? styles.floating : styles.inline,
         tone === 'gold' ? styles.gold : styles.green,
+        pressed && styles.pressed,
         style,
       ]}>
       <PlusIcon color={ink} size={floating ? 18 : 16} />
@@ -71,11 +72,14 @@ const styles = StyleSheet.create({
   green: {
     backgroundColor: colors.green,
   },
+  pressed: {
+    opacity: 0.86,
+  },
   gold: {
     backgroundColor: colors.gold,
   },
   label: {
-    fontSize: 15,
-    fontWeight: important,
+    fontSize: text.body,
+    fontFamily: face.important, fontWeight: '400',
   },
 });

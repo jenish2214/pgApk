@@ -5,7 +5,7 @@ import type {DeskAlertTone} from '../utils/deskAlerts';
 import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {important, text, face} from '../theme/type';
 
 const TONE = {
   late: {bar: colors.danger, background: colors.cancelledBg, label: colors.danger},
@@ -35,7 +35,11 @@ export default function DeskAlertCard({
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      style={[styles.card, {backgroundColor: paint.background}]}>
+      style={({pressed}) => [
+        styles.card,
+        {backgroundColor: paint.background},
+        pressed && styles.pressed,
+      ]}>
       <View style={[styles.bar, {backgroundColor: paint.bar}]} />
       <View style={styles.copy}>
         <Text style={[styles.title, {color: paint.label}]}>{heading}</Text>
@@ -55,18 +59,21 @@ const styles = StyleSheet.create({
   bar: {
     width: 4,
   },
+  pressed: {
+    opacity: 0.86,
+  },
   copy: {
     flex: 1,
     paddingHorizontal: padX,
     paddingVertical: padY,
   },
   title: {
-    fontSize: 14,
-    fontWeight: important,
+    fontSize: text.label,
+    fontFamily: face.important, fontWeight: '400',
   },
   detail: {
     color: colors.ink,
-    fontSize: 13,
+    fontSize: text.meta,
     marginTop: spacing.xs,
   },
 });

@@ -3,7 +3,7 @@ import {StyleSheet, Text, View} from 'react-native';
 import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {padX, padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {important, text, face} from '../theme/type';
 import AppButton from './AppButton';
 
 export default function EmptyState({
@@ -20,6 +20,7 @@ export default function EmptyState({
   const {t} = useLanguage();
   return (
     <View style={styles.wrap}>
+      <View style={styles.gem} />
       <Text style={styles.title}>{t(title)}</Text>
       {message ? <Text style={styles.message}>{t(message)}</Text> : null}
       {actionLabel && onAction ? (
@@ -35,15 +36,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: padX,
     paddingVertical: spacing.xl,
   },
+  gem: {
+    backgroundColor: colors.gold,
+    height: 12,
+    marginBottom: spacing.lg,
+    transform: [{rotate: '45deg'}],
+    width: 12,
+  },
   title: {
     color: colors.ink,
-    fontSize: 18,
-    fontWeight: important,
+    fontSize: text.lead,
+    fontFamily: face.important, fontWeight: '400',
     textAlign: 'center',
   },
   message: {
     color: colors.muted,
-    fontSize: 15,
+    fontSize: text.body,
     lineHeight: 22,
     marginTop: padY,
     textAlign: 'center',

@@ -3,8 +3,8 @@ import {Modal, Pressable, StyleSheet, Text, View} from 'react-native';
 import type {Language} from '../i18n/active';
 import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
-import {padX, padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {padX, spacing} from '../theme/spacing';
+import {text, face} from '../theme/type';
 
 const CHOICES: {id: Language; label: string}[] = [
   {id: 'en', label: 'English'},
@@ -55,7 +55,7 @@ export default function LanguageSheet({
 
 const styles = StyleSheet.create({
   backdrop: {
-    backgroundColor: 'rgba(15, 58, 46, 0.45)',
+    backgroundColor: 'rgba(32, 33, 36, 0.4)',
     flex: 1,
     justifyContent: 'flex-end',
     padding: padX,
@@ -64,17 +64,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: radius,
     marginBottom: spacing.lg,
-    padding: padX,
+    padding: spacing.lg,
   },
   title: {
     color: colors.ink,
-    fontSize: 18,
-    fontWeight: important,
+    fontSize: text.lead,
+    fontFamily: face.important, fontWeight: '400',
   },
   note: {
     color: colors.muted,
-    fontSize: 14,
-    marginBottom: padY,
+    fontSize: text.label,
+    fontFamily: face.regular, fontWeight: '400',
+    marginBottom: spacing.md,
     marginTop: spacing.xs,
   },
   choice: {
@@ -82,8 +83,10 @@ const styles = StyleSheet.create({
     borderRadius: radius,
     borderWidth: 1,
     marginBottom: spacing.sm,
-    paddingHorizontal: padY,
-    paddingVertical: padY,
+    minHeight: 48,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
   },
   choiceOn: {
     backgroundColor: colors.green,
@@ -91,8 +94,8 @@ const styles = StyleSheet.create({
   },
   choiceText: {
     color: colors.ink,
-    fontSize: 16,
-    fontWeight: important,
+    fontSize: text.section,
+    fontFamily: face.important, fontWeight: '400',
   },
   choiceTextOn: {
     color: colors.cream,

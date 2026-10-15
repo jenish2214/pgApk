@@ -1,8 +1,5 @@
 import type {DeskIconName} from '../components/TabIcon';
-import {listInquiries} from '../services/inquiryService';
-import {listJangads} from '../services/jangadService';
 import {getDashboard} from '../services/orderService';
-import {listRepairs} from '../services/repairService';
 
 export type ManageScreenName =
   | 'ManageHome'
@@ -101,9 +98,9 @@ export function manageCounts(): Record<ManageCountKey, number> {
   const desk = getDashboard().counts;
   return {
     ready: desk.ready,
-    inquiries: listInquiries().filter(item => item.status === 'Waiting').length,
-    repairs: listRepairs().filter(item => item.status !== 'Returned').length,
+    inquiries: desk.inquiries,
+    repairs: desk.repairs,
     orders: desk.pending + desk.preparing + desk.ready,
-    jangads: listJangads().filter(item => item.status === 'Given').length,
+    jangads: desk.jangads,
   };
 }

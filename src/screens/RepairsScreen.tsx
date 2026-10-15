@@ -10,35 +10,37 @@ import PlusButton from '../components/PlusButton';
 import Screen from '../components/Screen';
 import ShopHeader from '../components/ShopHeader';
 import {listRepairs} from '../services/repairService';
+import {listWindow} from '../utils/listWindow';
+import {useDebouncedValue} from '../utils/useDebouncedValue';
 import {showNotice} from '../utils/confirm';
 import {formatDay} from '../utils/dates';
 import {callCustomer} from '../utils/whatsappUtils';
 import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
-import {radius} from '../theme/layout';
+import {cardLift, radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {important, face} from '../theme/type';
 
 type Props = NativeStackScreenProps<ShopStackParamList, 'RepairHome'>;
 
 export default function RepairsScreen({navigation}: Props) {
   const {t} = useLanguage();
   const [query, setQuery] = useState('');
+  const settledQuery = useDebouncedValue(query);
   const [repairs, setRepairs] = useState<Repair[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const load = useCallback(() => {
-    setLoading(true);
     try {
-      setRepairs(listRepairs(query));
+      setRepairs(listRepairs(settledQuery));
       setError('');
     } catch (loadError: unknown) {
       setError(errorMessage(loadError, 'Repairs could not be loaded.'));
     } finally {
       setLoading(false);
     }
-  }, [query]);
+  }, [settledQuery]);
 
   useFocusEffect(
     useCallback(() => {
@@ -57,6 +59,7 @@ export default function RepairsScreen({navigation}: Props) {
         <FlatList
           data={repairs}
           keyExtractor={item => String(item.id)}
+          {...listWindow}
           contentContainerStyle={styles.list}
           keyboardShouldPersistTaps="handled"
           ListHeaderComponent={
@@ -82,7 +85,7 @@ export default function RepairsScreen({navigation}: Props) {
             <Pressable
               accessibilityRole="button"
               onPress={() => navigation.navigate('AddEditRepair', {repairId: item.id})}
-              style={styles.card}>
+              style={({pressed}) => [styles.card, pressed && styles.pressed]}>
               <View style={styles.row}>
                 <Text style={styles.name}>{item.customerName}</Text>
                 <Text style={styles.status}>{item.status}</Text>
@@ -158,6 +161,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: padY,
     padding: padY,
+    ...cardLift,
+  },
+  pressed: {
+    opacity: 0.86,
   },
   row: {
     alignItems: 'center',
@@ -168,18 +175,18 @@ const styles = StyleSheet.create({
     color: colors.ink,
     flex: 1,
     fontSize: 16,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginRight: spacing.sm,
   },
   status: {
     color: colors.green,
     fontSize: 12,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   item: {
     color: colors.ink,
     fontSize: 15,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginTop: spacing.xs,
   },
   meta: {
@@ -204,6 +211,6 @@ const styles = StyleSheet.create({
   callText: {
     color: colors.green,
     fontSize: 13,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
 });

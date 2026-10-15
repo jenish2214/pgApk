@@ -7,7 +7,7 @@ import type {
   SqlExecutor,
   SqlRow,
 } from '../types';
-import {rowsOf} from './rows';
+import {groupByParent, rowsOf} from './rows';
 
 function blankToNull(value: string | null | undefined): string | null {
   const text = String(value || '').trim();
@@ -136,6 +136,24 @@ export function replaceInquiryPieces(
   });
 }
 
+function attachInquiryPieces(executor: SqlExecutor, inquiries: Inquiry[]): Inquiry[] {
+  if (inquiries.length === 0) {
+    return inquiries;
+  }
+  const ids = inquiries.map(item => item.id);
+  const pieces = groupByParent(
+    rowsOf(
+      executor.execute(
+        `SELECT * FROM inquiry_items WHERE inquiry_id IN (${ids.map(() => '?').join(', ')}) ORDER BY id ASC`,
+        ids,
+      ),
+    ),
+    'inquiry_id',
+    mapPiece,
+  );
+  return inquiries.map(item => ({...item, pieces: pieces.get(item.id) ?? []}));
+}
+
 function withPieces(executor: SqlExecutor, inquiry: Inquiry | null): Inquiry | null {
   if (!inquiry) {
     return null;
@@ -154,20 +172,21 @@ export function listInquiriesByCustomer(
   executor: SqlExecutor,
   customerId: number,
 ): Inquiry[] {
-  return rowsOf(
+  const rows = rowsOf(
     executor.execute(
       `SELECT * FROM inquiries
        WHERE customer_id = ?
        ORDER BY follow_up_date ASC, id DESC`,
       [Number(customerId)],
     ),
-  ).map(row => withPieces(executor, mapInquiry(row)) as Inquiry);
+  ).map(row => mapInquiry(row) as Inquiry);
+  return attachInquiryPieces(executor, rows);
 }
 
 export function searchInquiries(executor: SqlExecutor, query = ''): Inquiry[] {
   const term = `%${String(query || '').trim()}%`;
   const hasQuery = String(query || '').trim().length > 0;
-  return rowsOf(
+  const rows = rowsOf(
     executor.execute(
       `SELECT * FROM inquiries
        WHERE (? = 0) OR customer_name LIKE ? OR phone LIKE ? OR item_name LIKE ?
@@ -179,5 +198,6 @@ export function searchInquiries(executor: SqlExecutor, query = ''): Inquiry[] {
                 follow_up_date ASC, id DESC`,
       [hasQuery ? 1 : 0, term, term, term, term, term],
     ),
-  ).map(row => withPieces(executor, mapInquiry(row)) as Inquiry);
+  ).map(row => mapInquiry(row) as Inquiry);
+  return attachInquiryPieces(executor, rows);
 }

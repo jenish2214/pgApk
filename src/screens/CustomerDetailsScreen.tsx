@@ -67,7 +67,7 @@ function showHistoryLine(
 }
 import {gap, radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {important, face} from '../theme/type';
 
 type Props = NativeStackScreenProps<ShopStackParamList, 'CustomerDetails'>;
 
@@ -319,12 +319,12 @@ const styles = StyleSheet.create({
   name: {
     color: colors.ink,
     fontSize: 22,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   phone: {
     color: colors.green,
     fontSize: 18,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginTop: spacing.xs,
   },
   meta: {
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
   day: {
     color: colors.green,
     fontSize: 13,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginTop: padY,
   },
   infoCard: {
@@ -349,14 +349,14 @@ const styles = StyleSheet.create({
   infoLabel: {
     color: colors.muted,
     fontSize: 12,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     letterSpacing: 0.4,
     textTransform: 'uppercase',
   },
   infoValue: {
     color: colors.ink,
     fontSize: 16,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginTop: spacing.xs,
   },
   history: {
@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
   historyTitle: {
     color: colors.ink,
     fontSize: 15,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   historyDetail: {
     color: colors.muted,
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
   callText: {
     color: colors.green,
     fontSize: 13,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   block: {
     color: colors.ink,
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
   section: {
     color: colors.ink,
     fontSize: 18,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginBottom: padY,
     marginTop: spacing.lg,
   },

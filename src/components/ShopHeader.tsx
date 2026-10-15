@@ -6,7 +6,7 @@ import BackIcon from './BackIcon';
 import {ManageMenu} from './ManageDrawer';
 import {colors} from '../theme/colors';
 import {padX, padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {text, face} from '../theme/type';
 
 export default function ShopHeader({
   title,
@@ -23,7 +23,7 @@ export default function ShopHeader({
   return (
     <View style={[styles.header, {paddingTop: insets.top + padY}]}>
       <View style={styles.row}>
-        {menu ? <ManageMenu /> : null}
+        {menu ? <ManageMenu color={colors.ink} /> : null}
         {onBack ? (
           <Pressable
             accessibilityRole="button"
@@ -31,10 +31,12 @@ export default function ShopHeader({
             onPress={onBack}
             hitSlop={6}
             style={styles.back}>
-            <BackIcon color={colors.cream} />
+            <BackIcon color={colors.ink} />
           </Pressable>
         ) : null}
-        <Text style={styles.title}>{t(title)}</Text>
+        <Text style={styles.title} numberOfLines={1}>
+          {t(title)}
+        </Text>
       </View>
     </View>
   );
@@ -42,13 +44,16 @@ export default function ShopHeader({
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: colors.green,
-    paddingBottom: padY,
+    backgroundColor: colors.white,
+    borderBottomColor: colors.line,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingBottom: spacing.md,
     paddingHorizontal: padX,
   },
   row: {
     alignItems: 'center',
     flexDirection: 'row',
+    minHeight: 44,
   },
   back: {
     alignItems: 'center',
@@ -58,9 +63,9 @@ const styles = StyleSheet.create({
     minWidth: 36,
   },
   title: {
-    color: colors.cream,
+    color: colors.ink,
     flex: 1,
-    fontSize: 20,
-    fontWeight: important,
+    fontSize: text.title,
+    fontFamily: face.display, fontWeight: '400',
   },
 });

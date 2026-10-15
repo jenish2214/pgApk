@@ -1,6 +1,7 @@
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {ShopStackParamList} from '../types';
-import React, {useEffect, useState} from 'react';
+import {useFocusEffect} from '@react-navigation/native';
+import React, {useCallback, useState} from 'react';
 import {
   Image,
   KeyboardAvoidingView,
@@ -8,6 +9,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   View,
 } from 'react-native';
@@ -17,12 +19,13 @@ import Screen from '../components/Screen';
 import ShopHeader from '../components/ShopHeader';
 import {useLanguage} from '../i18n/LanguageProvider';
 import type {Language} from '../i18n/active';
-import {orderSirenEnabled, setOrderSirenEnabled, testOrderSiren} from '../services/orderSiren';
+import {refreshOrderReminder} from '../services/orderReminders';
+import {remindersEnabled, setRemindersEnabled, stopOrderSiren} from '../services/orderSiren';
 import {isShopEmail, readProfile, writeProfile, type ShopProfile} from '../services/profileService';
 import {colors} from '../theme/colors';
-import {radius} from '../theme/layout';
-import {padX, padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {cardLift, radius} from '../theme/layout';
+import {padX, spacing} from '../theme/spacing';
+import {text, face} from '../theme/type';
 import {useColors} from '../theme/ThemeProvider';
 import {captureShopPhoto, pickShopImage} from '../utils/pickImage';
 
@@ -45,14 +48,19 @@ export default function ManageScreen(_props: Props) {
   const [nameError, setNameError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [photoError, setPhotoError] = useState('');
-  const [siren, setSiren] = useState(true);
-  const [testing, setTesting] = useState(false);
-  const [sirenNote, setSirenNote] = useState('');
+  const [reminders, setReminders] = useState(true);
+  const [notice, setNotice] = useState('');
 
-  useEffect(() => {
+  const loadAlerts = useCallback(() => {
     setProfile(readProfile());
-    setSiren(orderSirenEnabled());
+    setReminders(remindersEnabled());
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadAlerts();
+    }, [loadAlerts]),
+  );
 
   function openProfile() {
     setDraft(profile);
@@ -91,21 +99,19 @@ export default function ManageScreen(_props: Props) {
     }
   }
 
-  async function testSiren() {
-    setTesting(true);
-    setSirenNote('');
-    try {
-      const played = await testOrderSiren();
-      if (played === 'silent') {
-        setSirenNote('Turn up the phone alarm volume to hear the siren.');
-      } else if (played === 'denied') {
-        setSirenNote('Allow notifications to hear the order siren.');
-      }
-    } catch {
-      setSirenNote('Allow notifications to hear the order siren.');
-    } finally {
-      setTesting(false);
+  async function onRemindersChange(value: boolean) {
+    setReminders(value);
+    setRemindersEnabled(value);
+    setNotice('');
+    if (!value) {
+      stopOrderSiren();
     }
+    try {
+      await refreshOrderReminder();
+    } catch {
+      setNotice('The reminder could not be scheduled.');
+    }
+    loadAlerts();
   }
 
   const initial = profile.name.trim().charAt(0).toUpperCase() || 'P';
@@ -116,66 +122,62 @@ export default function ManageScreen(_props: Props) {
       <View style={[styles.screen, {backgroundColor: palette.ivory}]}>
         <ShopHeader title="Settings" menu />
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('Edit profile')}
-            onPress={openProfile}
-            style={({pressed}) => [
-              styles.profile,
-              {backgroundColor: palette.white, borderColor: palette.line},
-              pressed && styles.rowPressed,
-            ]}>
-            {profile.avatarUri ? (
-              <Image source={{uri: profile.avatarUri}} style={styles.avatar} />
-            ) : (
-              <View style={styles.avatarFallback}>
-                <Text style={styles.avatarLetter}>{initial}</Text>
-              </View>
-            )}
-            <View style={styles.copy}>
-              <Text style={[styles.title, {color: palette.ink}]}>
-                {profile.name || t('Your name')}
-              </Text>
-              <Text style={[styles.detail, {color: palette.muted}]}>
-                {profile.email || t('Email')}
-              </Text>
-            </View>
-          </Pressable>
-
-          <Pressable
-            accessibilityRole="button"
-            onPress={openLanguage}
-            style={({pressed}) => [
-              styles.row,
-              {backgroundColor: palette.white, borderColor: palette.line},
-              pressed && styles.rowPressed,
-            ]}>
-            <View style={styles.copy}>
-              <Text style={[styles.title, {color: palette.ink}]}>{t('Language')}</Text>
-              <Text style={[styles.detail, {color: palette.muted}]}>{LANGUAGE_NAMES[language]}</Text>
-            </View>
-          </Pressable>
-
-          <View style={[styles.card, {backgroundColor: palette.white, borderColor: palette.line}]}>
-            <Text style={[styles.section, {color: palette.muted}]}>{t('Order alerts')}</Text>
-            <Text style={[styles.detail, {color: palette.ink}]}>
-              {t(
-                'Every order reminder plays the siren: 9:00 AM, 12:00 AM, and when an order is ready, due, or late. Loudness follows your phone alarm volume.',
-              )}
-            </Text>
+          <Text style={[styles.kicker, {color: palette.muted}]}>{t('Account')}</Text>
+          <View style={[styles.group, {backgroundColor: palette.white, borderColor: palette.line}]}>
             <Pressable
-              accessibilityRole="switch"
-              accessibilityState={{checked: siren}}
-              onPress={() => {
-                const next = !siren;
-                setSiren(next);
-                setOrderSirenEnabled(next);
-              }}
-              style={[styles.switchRow, {borderColor: palette.line}]}>
-              <Text style={[styles.title, {color: palette.ink}]}>{siren ? t('On') : t('Off')}</Text>
+              accessibilityRole="button"
+              accessibilityLabel={t('Edit profile')}
+              onPress={openProfile}
+              style={({pressed}) => [styles.row, pressed && styles.rowPressed]}>
+              {profile.avatarUri ? (
+                <Image source={{uri: profile.avatarUri}} style={styles.avatar} />
+              ) : (
+                <View style={[styles.avatar, styles.avatarFallback, {backgroundColor: palette.greenSoft}]}>
+                  <Text style={[styles.avatarLetter, {color: palette.green}]}>{initial}</Text>
+                </View>
+              )}
+              <View style={styles.copy}>
+                <Text style={[styles.title, {color: palette.ink}]} numberOfLines={1}>
+                  {profile.name || t('Your name')}
+                </Text>
+                <Text style={[styles.detail, {color: palette.muted}]} numberOfLines={1}>
+                  {profile.email || t('Email')}
+                </Text>
+              </View>
+              <Text style={[styles.chevron, {color: palette.muted}]}>›</Text>
             </Pressable>
-            {sirenNote ? <Text style={styles.note}>{t(sirenNote)}</Text> : null}
-            <AppButton label="Test siren" onPress={testSiren} disabled={testing} variant="secondary" />
+          </View>
+
+          <Text style={[styles.kicker, {color: palette.muted}]}>{t('Preferences')}</Text>
+          <View style={[styles.group, {backgroundColor: palette.white, borderColor: palette.line}]}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={openLanguage}
+              style={({pressed}) => [styles.row, pressed && styles.rowPressed]}>
+              <View style={styles.copy}>
+                <Text style={[styles.title, {color: palette.ink}]}>{t('Language')}</Text>
+              </View>
+              <Text style={[styles.value, {color: palette.muted}]}>{LANGUAGE_NAMES[language]}</Text>
+              <Text style={[styles.chevron, {color: palette.muted}]}>›</Text>
+            </Pressable>
+            <View style={[styles.hairline, {backgroundColor: palette.line}]} />
+            <View style={styles.row}>
+              <View style={styles.copy}>
+                <Text style={[styles.title, {color: palette.ink}]}>{t('Notifications')}</Text>
+                <Text style={[styles.detail, {color: palette.muted}]}>
+                  {t('Order reminders on this phone.')}
+                </Text>
+              </View>
+              <Switch
+                value={reminders}
+                onValueChange={onRemindersChange}
+                trackColor={{false: palette.line, true: palette.green}}
+                thumbColor={palette.white}
+              />
+            </View>
+            {notice ? (
+              <Text style={[styles.notice, {color: palette.ink}]}>{t(notice)}</Text>
+            ) : null}
           </View>
         </ScrollView>
       </View>
@@ -185,13 +187,14 @@ export default function ManageScreen(_props: Props) {
         <Pressable style={styles.backdrop} onPress={() => setEditing(false)}>
           <Pressable style={[styles.sheet, {backgroundColor: palette.white}]} onPress={() => undefined}>
             <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.sheetBody}>
+            <View style={styles.handle} />
             <Text style={[styles.sheetTitle, {color: palette.ink}]}>{t('Edit profile')}</Text>
             <View style={styles.avatarPress}>
               {draft.avatarUri ? (
-                <Image source={{uri: draft.avatarUri}} style={styles.avatar} />
+                <Image source={{uri: draft.avatarUri}} style={styles.avatarLarge} />
               ) : (
-                <View style={styles.avatarFallback}>
-                  <Text style={styles.avatarLetter}>{draftInitial}</Text>
+                <View style={[styles.avatarLarge, styles.avatarFallback, {backgroundColor: palette.greenSoft}]}>
+                  <Text style={[styles.avatarLetter, {color: palette.green}]}>{draftInitial}</Text>
                 </View>
               )}
               {photoError ? <Text style={styles.note}>{t(photoError)}</Text> : null}
@@ -229,78 +232,96 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: padX,
-    paddingBottom: padY * 2,
-    gap: spacing.md,
-  },
-  card: {
-    borderWidth: 1,
-    borderRadius: radius,
-    padding: spacing.md,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xl,
     gap: spacing.sm,
   },
-  section: {
-    fontSize: 13,
-    fontWeight: important,
+  kicker: {
+    fontSize: text.small,
+    fontFamily: face.important, fontWeight: '400',
+    letterSpacing: 0.4,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
+    marginLeft: spacing.xs,
   },
-  profile: {
-    alignItems: 'center',
-    borderRadius: radius,
+  group: {
     borderWidth: 1,
-    flexDirection: 'row',
-    gap: spacing.md,
-    padding: spacing.md,
+    borderRadius: radius,
+    overflow: 'hidden',
+    ...cardLift,
   },
   avatarPress: {
     alignItems: 'center',
     gap: spacing.xs,
   },
   avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
+  avatarLarge: {
     width: 88,
     height: 88,
     borderRadius: 44,
   },
   avatarFallback: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: colors.cream,
+    backgroundColor: colors.ivory,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarLetter: {
     color: colors.green,
-    fontSize: 28,
-    fontWeight: important,
+    fontSize: text.lead,
+    fontFamily: face.important, fontWeight: '400',
   },
   row: {
-    borderWidth: 1,
-    borderRadius: radius,
-    padding: spacing.md,
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.md,
+    minHeight: 64,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
   },
   rowPressed: {
-    opacity: 0.7,
+    backgroundColor: colors.ivory,
+  },
+  hairline: {
+    height: StyleSheet.hairlineWidth,
+    marginLeft: spacing.lg,
   },
   copy: {
+    flex: 1,
     gap: spacing.xs,
   },
   title: {
-    fontSize: 16,
-    fontWeight: important,
+    fontSize: text.section,
+    fontFamily: face.important, fontWeight: '400',
   },
   detail: {
-    fontSize: 13,
-    fontWeight: important,
+    fontSize: text.meta,
+    fontFamily: face.regular, fontWeight: '400',
   },
-  switchRow: {
-    borderWidth: 1,
-    borderRadius: radius,
-    paddingVertical: spacing.sm,
-    alignItems: 'center',
+  value: {
+    fontSize: text.body,
+    fontFamily: face.regular, fontWeight: '400',
+  },
+  chevron: {
+    fontSize: text.title,
+    fontFamily: face.regular, fontWeight: '400',
+    marginTop: -2,
   },
   note: {
     color: colors.danger,
-    fontSize: 13,
-    fontWeight: important,
+    fontSize: text.meta,
+    fontFamily: face.regular, fontWeight: '400',
+  },
+  notice: {
+    color: colors.ink,
+    fontSize: text.meta,
+    fontFamily: face.regular, fontWeight: '400',
+    lineHeight: text.lead,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
   },
   backdrop: {
     flex: 1,
@@ -313,11 +334,21 @@ const styles = StyleSheet.create({
     maxHeight: '90%',
   },
   sheetBody: {
-    gap: spacing.sm,
-    padding: spacing.lg,
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xl,
+    paddingTop: spacing.sm,
+  },
+  handle: {
+    alignSelf: 'center',
+    backgroundColor: colors.line,
+    borderRadius: radius,
+    height: 4,
+    marginBottom: spacing.sm,
+    width: 36,
   },
   sheetTitle: {
-    fontSize: 18,
-    fontWeight: important,
+    fontSize: text.lead,
+    fontFamily: face.important, fontWeight: '400',
   },
 });

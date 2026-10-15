@@ -10,7 +10,7 @@ import type {
 } from '../types';
 import {formatOrderNumber, nextSequence} from '../utils/orderNumbers';
 import {READY_STATUS} from '../utils/orderStatus';
-import {rowsOf} from './rows';
+import {groupByParent, rowsOf} from './rows';
 
 const ORDER_SELECT = `
   SELECT
@@ -195,19 +195,35 @@ export function getOrderById(executor: SqlExecutor, id: number): Order | null {
   return {...order, pieces: listPieces(executor, order.id)};
 }
 
+function attachOrderPieces(executor: SqlExecutor, orders: Order[]): Order[] {
+  if (orders.length === 0) {
+    return orders;
+  }
+  const marks = orders.map(() => '?').join(', ');
+  const pieces = groupByParent(
+    rowsOf(
+      executor.execute(
+        `SELECT * FROM order_items WHERE order_id IN (${marks}) ORDER BY id ASC`,
+        orders.map(order => order.id),
+      ),
+    ),
+    'order_id',
+    mapPiece,
+  );
+  return orders.map(order => ({...order, pieces: pieces.get(order.id) ?? []}));
+}
+
 export function listOrdersByCustomer(
   executor: SqlExecutor,
   customerId: number,
 ): Order[] {
-  return rowsOf(
+  const orders = rowsOf(
     executor.execute(
       `${ORDER_SELECT} WHERE orders.customer_id = ? ORDER BY orders.updated_at DESC`,
       [Number(customerId)],
     ),
-  ).map(row => {
-    const order = mapOrder(row) as Order;
-    return {...order, pieces: listPieces(executor, order.id)};
-  });
+  ).map(row => mapOrder(row) as Order);
+  return attachOrderPieces(executor, orders);
 }
 
 export function searchOrders(
@@ -278,6 +294,9 @@ export function dashboardCounts(executor: SqlExecutor): {
   pending: number;
   preparing: number;
   ready: number;
+  inquiries: number;
+  repairs: number;
+  jangads: number;
 } {
   const rows = rowsOf(
     executor.execute(
@@ -285,7 +304,10 @@ export function dashboardCounts(executor: SqlExecutor): {
         (SELECT COUNT(*) FROM customers) AS customers,
         (SELECT COUNT(*) FROM orders WHERE status = 'Pending') AS pending,
         (SELECT COUNT(*) FROM orders WHERE status = 'In Preparation') AS preparing,
-        (SELECT COUNT(*) FROM orders WHERE status = 'Ready for Collection') AS ready`,
+        (SELECT COUNT(*) FROM orders WHERE status = 'Ready for Collection') AS ready,
+        (SELECT COUNT(*) FROM inquiries WHERE status = 'Waiting') AS inquiries,
+        (SELECT COUNT(*) FROM repairs WHERE status != 'Returned') AS repairs,
+        (SELECT COUNT(*) FROM jangads WHERE status = 'Given') AS jangads`,
     ),
   );
   const row = rows[0] || {};
@@ -294,5 +316,8 @@ export function dashboardCounts(executor: SqlExecutor): {
     pending: Number(row.pending || 0),
     preparing: Number(row.preparing || 0),
     ready: Number(row.ready || 0),
+    inquiries: Number(row.inquiries || 0),
+    repairs: Number(row.repairs || 0),
+    jangads: Number(row.jangads || 0),
   };
 }

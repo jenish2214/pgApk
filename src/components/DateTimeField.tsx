@@ -13,7 +13,7 @@ import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {gap, radius} from '../theme/layout';
 import {padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {important, regular, text, face} from '../theme/type';
 
 type Props = {
   label: string;
@@ -141,8 +141,8 @@ const styles = StyleSheet.create({
   },
   label: {
     color: colors.ink,
-    fontSize: 14,
-    fontWeight: important,
+    fontSize: text.label,
+    fontFamily: face.important, fontWeight: '400',
     marginBottom: spacing.xs,
   },
   field: {
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     borderRadius: radius,
     borderWidth: 1,
     justifyContent: 'center',
-    minHeight: 44,
+    minHeight: 48,
     paddingHorizontal: padY,
   },
   labelError: {
@@ -166,22 +166,22 @@ const styles = StyleSheet.create({
   },
   value: {
     color: colors.ink,
-    fontSize: 15,
-    fontWeight: important,
+    fontSize: text.body,
+    fontFamily: face.regular, fontWeight: '400',
   },
   placeholder: {
     color: colors.muted,
-    fontSize: 15,
+    fontSize: text.body,
   },
   clear: {
     color: colors.green,
-    fontSize: 13,
-    fontWeight: important,
+    fontSize: text.meta,
+    fontFamily: face.important, fontWeight: '400',
     marginTop: spacing.xs,
   },
   error: {
     color: colors.danger,
-    fontSize: 13,
+    fontSize: text.meta,
     marginTop: spacing.xs,
   },
   backdrop: {
@@ -197,8 +197,8 @@ const styles = StyleSheet.create({
   },
   sheetTitle: {
     color: colors.ink,
-    fontSize: 16,
-    fontWeight: important,
+    fontSize: text.section,
+    fontFamily: face.important, fontWeight: '400',
     textAlign: 'center',
   },
   sheetActions: {
@@ -214,12 +214,12 @@ const styles = StyleSheet.create({
   },
   cancel: {
     color: colors.muted,
-    fontSize: 15,
-    fontWeight: important,
+    fontSize: text.body,
+    fontFamily: face.important, fontWeight: '400',
   },
   done: {
     color: colors.green,
-    fontSize: 15,
-    fontWeight: important,
+    fontSize: text.body,
+    fontFamily: face.important, fontWeight: '400',
   },
 });

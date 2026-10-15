@@ -4,13 +4,13 @@ import type {Order} from '../types';
 import {categoryImage} from '../utils/categories';
 import {formatDay} from '../utils/dates';
 import {colors} from '../theme/colors';
-import {radius} from '../theme/layout';
+import {cardLift, radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {important, regular, text, face} from '../theme/type';
 import {useLanguage} from '../i18n/LanguageProvider';
 import StatusBadge from './StatusBadge';
 
-export default function OrderCard({
+function OrderCard({
   order,
   onPress,
   meta,
@@ -50,6 +50,8 @@ export default function OrderCard({
   );
 }
 
+export default React.memo(OrderCard);
+
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.white,
@@ -57,6 +59,7 @@ const styles = StyleSheet.create({
     borderRadius: radius,
     borderWidth: 1,
     marginBottom: padY,
+    ...cardLift,
     paddingHorizontal: padX,
     paddingVertical: padY,
   },
@@ -82,30 +85,30 @@ const styles = StyleSheet.create({
   },
   category: {
     color: colors.gold,
-    fontSize: 12,
-    fontWeight: important,
+    fontSize: text.small,
+    fontFamily: face.regular, fontWeight: '400',
     marginTop: spacing.xs,
   },
   number: {
     color: colors.gold,
-    fontSize: 13,
-    fontWeight: important,
+    fontSize: text.meta,
+    fontFamily: face.important, fontWeight: '400',
   },
   item: {
     color: colors.ink,
-    fontSize: 15,
-    fontWeight: important,
+    fontSize: text.body,
+    fontFamily: face.important, fontWeight: '400',
     marginTop: spacing.xs,
   },
   customer: {
     color: colors.green,
-    fontSize: 14,
-    fontWeight: important,
+    fontSize: text.label,
+    fontFamily: face.important, fontWeight: '400',
     marginTop: spacing.xs,
   },
   meta: {
     color: colors.muted,
-    fontSize: 13,
+    fontSize: text.meta,
     marginTop: spacing.xs,
   },
   actions: {

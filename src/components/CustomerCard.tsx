@@ -3,11 +3,11 @@ import {Pressable, StyleSheet, Text, View} from 'react-native';
 import type {Customer} from '../types';
 import {formatDay} from '../utils/dates';
 import {colors} from '../theme/colors';
-import {radius} from '../theme/layout';
+import {cardLift, radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {important, regular, text, face} from '../theme/type';
 
-export default function CustomerCard({
+function CustomerCard({
   customer,
   onPress,
 }: {
@@ -33,6 +33,8 @@ export default function CustomerCard({
   );
 }
 
+export default React.memo(CustomerCard);
+
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.white,
@@ -40,6 +42,7 @@ const styles = StyleSheet.create({
     borderRadius: radius,
     borderWidth: 1,
     marginBottom: padY,
+    ...cardLift,
     paddingHorizontal: padX,
     paddingVertical: padY,
   },
@@ -54,23 +57,23 @@ const styles = StyleSheet.create({
   name: {
     color: colors.ink,
     flex: 1,
-    fontSize: 15,
-    fontWeight: important,
+    fontSize: text.body,
+    fontFamily: face.important, fontWeight: '400',
     marginRight: spacing.sm,
   },
   date: {
     color: colors.muted,
-    fontSize: 12,
+    fontSize: text.small,
   },
   phone: {
     color: colors.green,
-    fontSize: 15,
-    fontWeight: important,
+    fontSize: text.body,
+    fontFamily: face.regular, fontWeight: '400',
     marginTop: spacing.xs,
   },
   address: {
     color: colors.muted,
-    fontSize: 14,
+    fontSize: text.label,
     marginTop: spacing.xs,
   },
 });

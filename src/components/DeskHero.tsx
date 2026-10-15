@@ -3,7 +3,7 @@ import {StyleSheet, Text, View} from 'react-native';
 import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {display, important, text, face} from '../theme/type';
 
 export default function DeskHero({
   kicker,
@@ -36,27 +36,29 @@ export default function DeskHero({
 
 const styles = StyleSheet.create({
   hero: {
-    backgroundColor: colors.green,
+    backgroundColor: colors.white,
+    borderColor: colors.line,
     borderRadius: radius,
+    borderWidth: 1,
     marginBottom: padY,
     paddingHorizontal: padX,
     paddingVertical: padY,
   },
   kicker: {
-    color: colors.goldSoft,
-    fontSize: 12,
-    fontWeight: important,
-    letterSpacing: 0.6,
+    color: colors.muted,
+    fontSize: text.small,
+    fontFamily: face.important, fontWeight: '400',
+    letterSpacing: 0.2,
   },
   value: {
-    color: colors.cream,
-    fontSize: 40,
-    fontWeight: important,
+    color: colors.green,
+    fontSize: text.hero,
+    fontFamily: face.display, fontWeight: '400',
     marginTop: spacing.xs,
   },
   label: {
-    color: colors.goldSoft,
-    fontSize: 14,
+    color: colors.ink,
+    fontSize: text.label,
     marginTop: spacing.xs,
   },
   notes: {
@@ -72,8 +74,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   noteText: {
-    color: colors.cream,
-    fontSize: 12,
-    fontWeight: important,
+    color: colors.green,
+    fontSize: text.small,
+    fontFamily: face.important, fontWeight: '400',
   },
 });

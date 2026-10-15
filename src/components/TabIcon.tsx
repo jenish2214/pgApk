@@ -1,5 +1,6 @@
 import React from 'react';
-import {StyleSheet, View} from 'react-native';
+import {StyleSheet, Text, View} from 'react-native';
+import {face} from '../theme/type';
 import type {TabRouteName} from '../types';
 
 export type DeskIconName = TabRouteName | 'Ready' | 'Inquiry' | 'Repair' | 'Orders' | 'Jangad';
@@ -92,34 +93,31 @@ export default function TabIcon({
   }
 
   return (
-    <View style={styles.frame}>
-      <View style={[styles.roof, {borderBottomColor: color}]} />
-      <View style={[styles.house, {backgroundColor: color}]} />
+    <View style={[styles.appMark, {borderColor: color}]}>
+      <Text style={[styles.appMarkText, {color}]}>P</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  appMark: {
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    height: 22,
+    justifyContent: 'center',
+    width: 22,
+  },
+  appMarkText: {
+    fontFamily: face.display,
+    fontSize: 13,
+    lineHeight: 16,
+  },
   frame: {
     alignItems: 'center',
     height: 24,
     justifyContent: 'flex-end',
     width: 24,
-  },
-  roof: {
-    borderBottomWidth: 8,
-    borderLeftColor: 'transparent',
-    borderLeftWidth: 12,
-    borderRightColor: 'transparent',
-    borderRightWidth: 12,
-    height: 0,
-    width: 0,
-  },
-  house: {
-    borderRadius: 2,
-    height: 10,
-    marginTop: -1,
-    width: 16,
   },
   calendar: {
     borderRadius: 4,

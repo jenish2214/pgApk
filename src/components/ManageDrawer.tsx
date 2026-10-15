@@ -25,7 +25,7 @@ import {colors} from '../theme/colors';
 import {useColors} from '../theme/ThemeProvider';
 import {radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {important, face} from '../theme/type';
 import TabIcon from './TabIcon';
 
 function openDrawerTarget(navigation: NavigationProp<ParamListBase>, target: DrawerTarget) {
@@ -247,12 +247,12 @@ const styles = StyleSheet.create({
   drawerTitle: {
     color: colors.ink,
     fontSize: 18,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   close: {
     color: colors.green,
     fontSize: 14,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   list: {
     paddingBottom: spacing.lg,
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   section: {
     color: colors.muted,
     fontSize: 12,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     letterSpacing: 0.4,
     marginBottom: spacing.sm,
     marginTop: spacing.xs,
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     borderColor: colors.green,
   },
   rowPressed: {
-    backgroundColor: colors.cream,
+    backgroundColor: colors.ivory,
   },
   icon: {
     alignItems: 'center',
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   title: {
     color: colors.ink,
     fontSize: 16,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   detail: {
     color: colors.muted,
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
   count: {
     color: colors.green,
     fontSize: 18,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginLeft: spacing.sm,
     minWidth: 24,
     textAlign: 'right',
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
   countQuiet: {
     color: colors.muted,
     fontSize: 18,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginLeft: spacing.sm,
     minWidth: 24,
     textAlign: 'right',

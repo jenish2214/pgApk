@@ -11,7 +11,7 @@ import type {
   SqlRow,
 } from '../types';
 import {JANGAD_DIRECTIONS, JANGAD_STATUSES} from '../types';
-import {rowsOf} from './rows';
+import {groupByParent, rowsOf} from './rows';
 
 function blankToNull(value: string | null | undefined): string | null {
   const text = String(value || '').trim();
@@ -183,6 +183,39 @@ export function replaceJangadMoves(
   });
 }
 
+function attachJangadChildren(executor: SqlExecutor, jangads: Jangad[]): Jangad[] {
+  if (jangads.length === 0) {
+    return jangads;
+  }
+  const ids = jangads.map(item => item.id);
+  const marks = ids.map(() => '?').join(', ');
+  const pieces = groupByParent(
+    rowsOf(
+      executor.execute(
+        `SELECT * FROM jangad_items WHERE jangad_id IN (${marks}) ORDER BY id ASC`,
+        ids,
+      ),
+    ),
+    'jangad_id',
+    mapPiece,
+  );
+  const moves = groupByParent(
+    rowsOf(
+      executor.execute(
+        `SELECT * FROM jangad_moves WHERE jangad_id IN (${marks}) ORDER BY moved_at ASC, id ASC`,
+        ids,
+      ),
+    ),
+    'jangad_id',
+    mapMove,
+  );
+  return jangads.map(item => ({
+    ...item,
+    pieces: pieces.get(item.id) ?? [],
+    moves: moves.get(item.id) ?? [],
+  }));
+}
+
 function withPieces(executor: SqlExecutor, jangad: Jangad | null): Jangad | null {
   if (!jangad) {
     return null;
@@ -203,7 +236,7 @@ export function searchJangads(executor: SqlExecutor, query = '', status = ''): J
   const term = `%${String(query || '').trim()}%`;
   const hasQuery = String(query || '').trim().length > 0;
   const statusFilter = (JANGAD_STATUSES as readonly string[]).includes(status) ? status : '';
-  return rowsOf(
+  const rows = rowsOf(
     executor.execute(
       `SELECT * FROM jangads
        WHERE ((? = 0) OR shop_name LIKE ? OR given_by LIKE ? OR received_by LIKE ? OR note LIKE ?
@@ -225,7 +258,8 @@ export function searchJangads(executor: SqlExecutor, query = '', status = ''): J
         statusFilter,
       ],
     ),
-  ).map(row => withPieces(executor, mapJangad(row)) as Jangad);
+  ).map(row => mapJangad(row) as Jangad);
+  return attachJangadChildren(executor, rows);
 }
 
 export function listJangadTagNumbers(executor: SqlExecutor): string[] {

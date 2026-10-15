@@ -5,7 +5,7 @@ import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
 import {spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {important, text, face} from '../theme/type';
 
 const TONES = {
   Pending: {background: colors.pendingBg, text: colors.pendingText},
@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   text: {
-    fontSize: 12,
-    fontWeight: important,
+    fontSize: text.small,
+    fontFamily: face.important, fontWeight: '400',
   },
 });

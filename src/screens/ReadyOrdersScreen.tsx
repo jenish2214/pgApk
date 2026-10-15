@@ -10,6 +10,7 @@ import Screen from '../components/Screen';
 import OrderCard from '../components/OrderCard';
 import ShopHeader from '../components/ShopHeader';
 import {changeOrderStatus, listReady} from '../services/orderService';
+import {listWindow} from '../utils/listWindow';
 import {confirmAction, showNotice} from '../utils/confirm';
 import {formatDay, formatWhen} from '../utils/dates';
 import {buildReadyMessage, callCustomer, openWhatsApp} from '../utils/whatsappUtils';
@@ -28,7 +29,6 @@ export default function ReadyOrdersScreen({navigation}: Props) {
   const [error, setError] = useState('');
 
   const load = useCallback(() => {
-    setLoading(true);
     try {
       setOrders(listReady());
       setError('');
@@ -107,6 +107,7 @@ export default function ReadyOrdersScreen({navigation}: Props) {
       <FlatList
         data={orders}
         keyExtractor={item => String(item.id)}
+        {...listWindow}
         contentContainerStyle={styles.list}
         ListHeaderComponent={
           error ? <Text style={styles.error}>{t(error)}</Text> : undefined

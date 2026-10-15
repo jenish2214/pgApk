@@ -15,7 +15,7 @@ import Screen from '../components/Screen';
 import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
-import {fonts} from '../theme/type';
+import {face} from '../theme/type';
 
 const PAGES = [
   {
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
   },
   mark: {
     alignItems: 'center',
-    borderColor: colors.gold,
+    borderColor: colors.cream,
     borderRadius: 22,
     borderWidth: 1.5,
     height: 44,
@@ -224,13 +224,13 @@ const styles = StyleSheet.create({
     width: 44,
   },
   markText: {
-    color: colors.gold,
-    fontFamily: fonts.serif,
+    color: colors.cream,
+    fontFamily: face.display,
     fontSize: 22,
   },
   brandName: {
     color: colors.cream,
-    fontFamily: fonts.serif,
+    fontFamily: face.display,
     fontSize: 26,
   },
   brandLine: {
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   frame: {
-    borderColor: 'rgba(198, 161, 91, 0.45)',
+    borderColor: 'rgba(37, 99, 235, 0.45)',
     borderTopLeftRadius: 999,
     borderTopRightRadius: 999,
     borderWidth: 1,
@@ -272,9 +272,9 @@ const styles = StyleSheet.create({
     width: 72,
   },
   badgeText: {
-    color: colors.greenDeep,
+    color: colors.cream,
     fontSize: 12,
-    fontWeight: '800',
+    fontFamily: face.display, fontWeight: '400',
     letterSpacing: 0.6,
     textAlign: 'center',
   },
@@ -287,18 +287,18 @@ const styles = StyleSheet.create({
   kicker: {
     color: colors.cream,
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: face.display, fontWeight: '400',
     letterSpacing: 1.5,
     textAlign: 'center',
   },
   title: {
     color: colors.cream,
-    fontFamily: fonts.serif,
+    fontFamily: face.display,
     marginTop: 10,
     textAlign: 'center',
   },
   body: {
-    color: '#E4D8C4',
+    color: colors.goldSoft,
     fontSize: 15,
     lineHeight: 22,
     marginTop: 12,
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
   step: {
     color: colors.goldSoft,
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: face.display, fontWeight: '400',
     letterSpacing: 0.6,
     marginBottom: 12,
     textAlign: 'center',
@@ -341,8 +341,8 @@ const styles = StyleSheet.create({
     opacity: 0.86,
   },
   enterText: {
-    color: colors.greenDeep,
+    color: colors.cream,
     fontSize: 17,
-    fontWeight: '800',
+    fontFamily: face.display, fontWeight: '400',
   },
 });

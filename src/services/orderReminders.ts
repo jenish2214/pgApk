@@ -1,34 +1,50 @@
 import notifee, {
-  AlarmType,
   AndroidCategory,
   AndroidImportance,
+  AndroidNotificationSetting,
   AndroidVisibility,
   AuthorizationStatus,
   EventType,
   TriggerType,
 } from '@notifee/react-native';
-import {prepareDatabase} from '../database/database';
+import {getMeta, prepareDatabase, setMeta} from '../database/database';
 import {listInquiries} from './inquiryService';
 import {listOrders} from './orderService';
 import {getActiveLanguage} from '../i18n/active';
 import {translate} from '../i18n/translate';
-import {orderSirenEnabled, startSirenTone} from './orderSiren';
+import {
+  alarmDurationMs,
+  alarmVibrationEnabled,
+  beginNativeAlarmBatch,
+  cancelNativeAlarm,
+  catchUpNativeAlarms,
+  orderSirenEnabled,
+  pushAlarmOptions,
+  readNativeReminderStatus,
+  remindersEnabled,
+  scheduleNativeAlarm,
+  startSirenTone,
+  stopOrderSiren,
+  type NativeScheduleTiming,
+} from './orderSiren';
 import {
   MORNING_REMINDER_ID,
   PREPARATION_SIREN_HOURS,
   nextClockAt,
-  nextReminderAt,
-  orderReminderCopy,
-  reminderFireDay,
   shopAlertPlaysSiren,
   shopSirenCopy,
 } from '../utils/orderReminder';
+import {
+  reminderFullScreenNote,
+  reminderProblems,
+  type ReminderCheck,
+  type ReminderHealth,
+} from '../utils/reminderHealth';
 import {todayISO} from '../utils/dates';
 
-const CHANNEL_ID = 'pragati-order-warning';
+const CHANNEL_ID = 'pragati-alarm';
 const NOTIFICATION_ID = MORNING_REMINDER_ID;
 const PREVIOUS_NOTIFICATION_ID = 'pragati-morning-orders';
-const PREP_CHANNEL_ID = 'pragati-order-siren';
 
 export function preparationSirenId(hour: number): string {
   return `pragati-prep-siren-${hour}`;
@@ -42,20 +58,27 @@ export function isPreparationSiren(id?: string): boolean {
 const WARNING_VIBRATION = [0, 700, 180, 700, 180, 700, 180, 900];
 const VISIBLE_ALERT_ID = 'pragati-shop-alert';
 
-function alarmContent(id: string, title: string, body: string, channelId: string) {
+function alarmContent(id: string, title: string, body: string) {
+  const language = getActiveLanguage();
   return {
     id,
     title,
     body,
     android: {
-      channelId,
+      channelId: CHANNEL_ID,
       category: AndroidCategory.ALARM,
       importance: AndroidImportance.HIGH,
       visibility: AndroidVisibility.PUBLIC,
-      sound: 'default' as const,
       lightUpScreen: true,
       pressAction: {id: 'default'},
-      vibrationPattern: WARNING_VIBRATION,
+      autoCancel: true,
+      vibrationPattern: alarmVibrationEnabled() ? WARNING_VIBRATION : undefined,
+      actions: [
+        {
+          title: translate(language, 'Stop alarm'),
+          pressAction: {id: 'stop'},
+        },
+      ],
     },
     ios: {
       sound: 'default' as const,
@@ -94,63 +117,47 @@ function localizeReminder(
   return {title: translate(language, copy.title), body};
 }
 
-async function schedule(exact: boolean): Promise<void> {
-  const when = nextReminderAt();
-  const copy = localizeReminder(
-    orderReminderCopy(listOrders(), reminderFireDay(), listInquiries()),
-  );
-  await notifee.cancelNotification(PREVIOUS_NOTIFICATION_ID);
-  if (!copy) {
-    await notifee.cancelNotification(NOTIFICATION_ID);
-    return;
+function checkOf(value: boolean | undefined): ReminderCheck {
+  if (value === true) {
+    return 'ok';
   }
-  await notifee.createTriggerNotification(
-    alarmContent(NOTIFICATION_ID, copy.title, copy.body, CHANNEL_ID),
-    {
-      type: TriggerType.TIMESTAMP,
-      timestamp: when.getTime(),
-      alarmManager: exact
-        ? {type: AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE}
-        : true,
-    },
-  );
+  if (value === false) {
+    return 'off';
+  }
+  return 'unknown';
 }
 
-async function schedulePreparationSirens(exact: boolean): Promise<void> {
-  await Promise.all(
-    PREPARATION_SIREN_HOURS.map(hour => notifee.cancelNotification(preparationSirenId(hour))),
-  );
-  const copy = localizeReminder(shopSirenCopy(listOrders(), todayISO(), listInquiries()));
-  if (!copy || !orderSirenEnabled()) {
-    return;
-  }
+async function ensureAlarmChannel(): Promise<void> {
   await notifee.createChannel({
-    id: PREP_CHANNEL_ID,
-    name: 'Order siren',
-    description:
-      'Siren for preparation, ready, due, and late orders at 9:00 AM and 12:00 AM.',
+    id: CHANNEL_ID,
+    name: 'Order alarm',
+    description: 'Shop reminders. The siren uses the phone alarm volume and does not change it.',
     importance: AndroidImportance.HIGH,
-    sound: 'default',
-    vibration: true,
-    vibrationPattern: WARNING_VIBRATION,
+    vibration: alarmVibrationEnabled(),
+    vibrationPattern: alarmVibrationEnabled() ? WARNING_VIBRATION : undefined,
   });
-  await Promise.all(
-    PREPARATION_SIREN_HOURS.map(hour =>
-      notifee.createTriggerNotification(
-        alarmContent(preparationSirenId(hour), copy.title, copy.body, PREP_CHANNEL_ID),
-        {
-          type: TriggerType.TIMESTAMP,
-          timestamp: nextClockAt(hour).getTime(),
-          alarmManager: exact ? {type: AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE} : true,
-        },
-      ),
-    ),
-  );
+}
+
+async function notifeeFallback(
+  id: string,
+  copy: {title: string; body: string},
+  when: Date,
+): Promise<boolean> {
+  try {
+    await notifee.createTriggerNotification(alarmContent(id, copy.title, copy.body), {
+      type: TriggerType.TIMESTAMP,
+      timestamp: when.getTime(),
+      alarmManager: true,
+    });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
- * Plays the siren for a delivered reminder and keeps the message on screen.
- * Returns true when this delivery should schedule the next alarm.
+ * Plays the siren for a delivered Notifee reminder and keeps the message on screen.
+ * Native alarms play their own siren and do not come through here.
  */
 export async function onShopAlertDelivered(notification?: {
   id?: string;
@@ -162,48 +169,203 @@ export async function onShopAlertDelivered(notification?: {
     return false;
   }
   if (orderSirenEnabled()) {
-    await startSirenTone();
+    await startSirenTone(alarmDurationMs());
   }
   if (notification?.title) {
-    const channelId = isPreparationSiren(id) ? PREP_CHANNEL_ID : CHANNEL_ID;
     await notifee.displayNotification(
-      alarmContent(VISIBLE_ALERT_ID, notification.title, notification.body || '', channelId),
+      alarmContent(VISIBLE_ALERT_ID, notification.title, notification.body || ''),
     );
   }
   return true;
 }
 
-/** Schedule the next 9:00 reminder for ready and due customer orders. */
-export async function refreshOrderReminder(): Promise<void> {
-  const settings = await notifee.requestPermission({
-    alert: true,
-    sound: true,
-    badge: false,
-  });
-  if (settings.authorizationStatus === AuthorizationStatus.DENIED) {
-    return;
+type ClockResult = {
+  timing: NativeScheduleTiming | 'empty';
+  error: string;
+};
+
+async function armClock(
+  id: string,
+  hour: number,
+  copy: {title: string; body: string} | null,
+  sound: boolean,
+): Promise<ClockResult> {
+  await notifee.cancelNotification(id);
+  if (!copy) {
+    await cancelNativeAlarm(id);
+    await cancelNativeAlarm(`${id}-snooze`);
+    return {timing: 'empty', error: ''};
   }
-  await notifee.createChannel({
-    id: CHANNEL_ID,
-    name: 'Order warnings',
-    description: 'Warns when an order is ready, due, or late, and plays the order siren.',
-    importance: AndroidImportance.HIGH,
-    sound: 'default',
-    vibration: true,
-    vibrationPattern: WARNING_VIBRATION,
+  const when = nextClockAt(hour);
+  const timing = await scheduleNativeAlarm({
+    id,
+    at: when.getTime(),
+    title: copy.title,
+    body: copy.body,
+    hour,
+    sound,
   });
+  if (timing === 'exact' || timing === 'inexact') {
+    return {timing, error: ''};
+  }
+  const fallback = await notifeeFallback(id, copy, when);
+  if (timing === 'missing') {
+    return {
+      timing: fallback ? 'inexact' : 'unscheduled',
+      error: 'Rebuild the Android app so reminders can ring after it is closed.',
+    };
+  }
+  if (fallback) {
+    return {timing: 'inexact', error: ''};
+  }
+  return {timing: 'unscheduled', error: 'The reminder could not be scheduled.'};
+}
+
+function combineTiming(results: ClockResult[]): {timing: ReminderHealth['timing']; error: string} {
+  const scheduled = results.filter(result => result.timing !== 'empty');
+  if (scheduled.length === 0) {
+    return {timing: 'none', error: ''};
+  }
+  const error = scheduled.find(result => result.error)?.error ?? '';
+  if (scheduled.some(result => result.timing === 'unscheduled')) {
+    return {timing: 'unscheduled', error: error || 'The reminder could not be scheduled.'};
+  }
+  if (scheduled.some(result => result.timing === 'inexact')) {
+    return {timing: 'inexact', error};
+  }
+  return {timing: 'exact', error: ''};
+}
+
+const TEST_NOTIFICATION_ID = 'pragati-notification-test';
+let refreshSerial = 0;
+
+/** Schedule the shop alarms on this phone. A denied permission is reported, not ignored. */
+export async function refreshOrderReminder(): Promise<void> {
+  const serial = ++refreshSerial;
+  const stale = () => serial !== refreshSerial;
   try {
-    await schedule(true);
-    await schedulePreparationSirens(true);
+    await pushAlarmOptions();
+    if (!remindersEnabled()) {
+      beginNativeAlarmBatch();
+      for (const hour of PREPARATION_SIREN_HOURS) {
+        if (stale()) {
+          return;
+        }
+        await armClock(preparationSirenId(hour), hour, null, false);
+      }
+      await notifee.cancelNotification(NOTIFICATION_ID);
+      await notifee.cancelNotification(PREVIOUS_NOTIFICATION_ID);
+      await cancelNativeAlarm(NOTIFICATION_ID);
+      if (stale()) {
+        return;
+      }
+      setMeta('reminder_timing', 'none');
+      setMeta('reminder_error', '');
+      return;
+    }
+    try {
+      await notifee.requestPermission({alert: true, sound: true, badge: false});
+    } catch {
+      // Scheduling continues. The settings screen explains a denied permission.
+    }
+    try {
+      await ensureAlarmChannel();
+    } catch {
+      // The native alarm still creates the channel when it rings.
+    }
+    try {
+      await catchUpNativeAlarms();
+    } catch {
+      // The next open tries again. A missed alarm stays stored on the phone.
+    }
+    if (stale()) {
+      return;
+    }
+    beginNativeAlarmBatch();
+    const sound = orderSirenEnabled();
+    const copy = localizeReminder(shopSirenCopy(listOrders(), todayISO(), listInquiries()));
+    const results: ClockResult[] = [];
+    for (const hour of PREPARATION_SIREN_HOURS) {
+      if (stale()) {
+        return;
+      }
+      results.push(await armClock(preparationSirenId(hour), hour, copy, sound));
+    }
+    await notifee.cancelNotification(NOTIFICATION_ID);
+    await notifee.cancelNotification(PREVIOUS_NOTIFICATION_ID);
+    await cancelNativeAlarm(NOTIFICATION_ID);
+    if (stale()) {
+      return;
+    }
+    const combined = combineTiming(results);
+    setMeta('reminder_timing', combined.timing);
+    setMeta('reminder_error', combined.error);
   } catch {
-    await schedule(false);
-    await schedulePreparationSirens(false);
+    if (stale()) {
+      return;
+    }
+    setMeta('reminder_error', 'The reminder could not be scheduled.');
+    setMeta('reminder_timing', 'unscheduled');
   }
 }
 
-/** After a warning is delivered, queue the next morning with fresh shop records. */
+export type TestNotice = 'sent' | 'sent-quiet' | 'sent-silent' | 'denied' | 'channel-off' | 'failed';
+
+/** One immediate test. Repeating it updates the same notification. */
+export async function sendTestNotification(): Promise<TestNotice> {
+  try {
+    const settings = await notifee.requestPermission({alert: true, sound: true, badge: false});
+    if (settings.authorizationStatus === AuthorizationStatus.DENIED) {
+      return 'denied';
+    }
+    await ensureAlarmChannel();
+    await pushAlarmOptions();
+    const channel = await notifee.getChannel(CHANNEL_ID);
+    if (channel?.blocked) {
+      return 'channel-off';
+    }
+    const native = await readNativeReminderStatus();
+    if (native && !native.notificationsEnabled) {
+      return 'denied';
+    }
+    if (native?.channelBlocked) {
+      return 'channel-off';
+    }
+    const language = getActiveLanguage();
+    await notifee.displayNotification(
+      alarmContent(
+        TEST_NOTIFICATION_ID,
+        translate(language, 'Test notification'),
+        translate(language, 'This is a test notification. It is not a customer reminder.'),
+      ),
+    );
+    if (!orderSirenEnabled()) {
+      return 'sent-quiet';
+    }
+    const tone = await startSirenTone(alarmDurationMs());
+    if (tone === 'silent') {
+      return 'sent-silent';
+    }
+    return 'sent';
+  } catch {
+    return 'failed';
+  }
+}
+
+/** After a warning is delivered, queue the next alarm with fresh shop records. */
 export function watchOrderReminder(): () => void {
   return notifee.onForegroundEvent(({type, detail}) => {
+    if (type === EventType.ACTION_PRESS && detail.pressAction?.id === 'stop') {
+      stopOrderSiren();
+      return;
+    }
+    if (type === EventType.DISMISSED) {
+      const id = detail.notification?.id;
+      if (id === VISIBLE_ALERT_ID || id === 'pragati-order-siren' || shopAlertPlaysSiren(id)) {
+        stopOrderSiren();
+      }
+      return;
+    }
     if (type !== EventType.DELIVERED) {
       return;
     }
@@ -217,7 +379,101 @@ export function watchOrderReminder(): () => void {
   });
 }
 
+export async function requestStartupPermissions(): Promise<'granted' | 'denied'> {
+  try {
+    const settings = await notifee.requestPermission({
+      alert: true,
+      sound: true,
+      badge: false,
+    });
+    if (settings.authorizationStatus === AuthorizationStatus.DENIED) {
+      return 'denied';
+    }
+    return 'granted';
+  } catch {
+    return 'denied';
+  }
+}
+
 export async function continueOrderReminder(): Promise<void> {
   await prepareDatabase();
   await refreshOrderReminder();
+}
+
+export async function readReminderHealth(): Promise<ReminderHealth> {
+  const native = await readNativeReminderStatus();
+  let notifications = checkOf(native?.notificationsEnabled);
+  let exact = checkOf(native?.exactAllowed);
+  try {
+    const settings = await notifee.getNotificationSettings();
+    if (settings.authorizationStatus === AuthorizationStatus.DENIED) {
+      notifications = 'off';
+    } else if (notifications === 'unknown' && settings.authorizationStatus === AuthorizationStatus.AUTHORIZED) {
+      notifications = 'ok';
+    }
+    if (exact === 'unknown') {
+      const alarm = settings.android?.alarm;
+      exact =
+        alarm === AndroidNotificationSetting.ENABLED
+          ? 'ok'
+          : alarm === AndroidNotificationSetting.DISABLED
+            ? 'off'
+            : 'unknown';
+    }
+  } catch {
+    // Native status still covers Android checks.
+  }
+  let channel: ReminderCheck = 'unknown';
+  let vibration: ReminderCheck = 'unknown';
+  try {
+    const created = await notifee.getChannel(CHANNEL_ID);
+    if (created) {
+      channel = created.blocked ? 'off' : 'ok';
+      vibration = created.vibration === false ? 'off' : 'ok';
+    }
+  } catch {
+    channel = 'unknown';
+  }
+  if (native?.channelBlocked) {
+    channel = 'off';
+  }
+  if (native && native.channelVibration === false) {
+    vibration = 'off';
+  }
+  const storedTiming = getMeta('reminder_timing', native?.timing || 'none');
+  const timing = storedTiming === 'exact' || storedTiming === 'inexact' || storedTiming === 'unscheduled'
+    ? storedTiming
+    : 'none';
+  const fullScreen = native?.fullScreen;
+  return {
+    notifications,
+    exact,
+    channel,
+    vibration,
+    battery: checkOf(native?.batteryUnrestricted),
+    fullScreen: fullScreen === 'available' || fullScreen === 'unavailable' ? fullScreen : 'unknown',
+    alarmVolume: native ? native.alarmVolume : null,
+    timing,
+    scheduleError: getMeta('reminder_error', ''),
+  };
+}
+
+export function reminderWarningLines(health: ReminderHealth): string[] {
+  return reminderProblems(health);
+}
+
+export function reminderScreenNote(health: ReminderHealth): string {
+  return reminderFullScreenNote(health);
+}
+
+export async function openReminderSettings(target: 'notifications' | 'alarms' | 'battery'): Promise<void> {
+  if (target === 'alarms') {
+    await notifee.openAlarmPermissionSettings();
+    return;
+  }
+  if (target === 'battery') {
+    await notifee.openBatteryOptimizationSettings();
+    return;
+  }
+  await notifee.openNotificationSettings(CHANNEL_ID);
 }

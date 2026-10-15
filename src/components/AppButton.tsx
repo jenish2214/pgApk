@@ -4,7 +4,7 @@ import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
 import {padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {important, text, face} from '../theme/type';
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
 
@@ -25,7 +25,7 @@ export default function AppButton({
 }: Props) {
   const {t} = useLanguage();
   const labelTone =
-    variant === 'primary' ? styles.onGold : variant === 'danger' ? styles.onDanger : styles.dark;
+    variant === 'primary' ? styles.onPrimary : variant === 'danger' ? styles.onDanger : styles.dark;
   return (
     <Pressable
       accessibilityRole="button"
@@ -38,7 +38,8 @@ export default function AppButton({
         variant === 'danger' && styles.danger,
         variant === 'ghost' && styles.ghost,
         disabled && styles.disabled,
-        pressed && !disabled && styles.pressed,
+        pressed && !disabled && variant === 'primary' && styles.primaryPressed,
+        pressed && !disabled && variant !== 'primary' && styles.pressed,
         style,
       ]}>
       <Text style={[styles.label, labelTone]}>{t(label)}</Text>
@@ -48,7 +49,7 @@ export default function AppButton({
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 40,
+    minHeight: 48,
     borderRadius: radius,
     alignItems: 'center',
     justifyContent: 'center',
@@ -56,7 +57,10 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   primary: {
-    backgroundColor: colors.gold,
+    backgroundColor: colors.green,
+  },
+  primaryPressed: {
+    backgroundColor: colors.greenDeep,
   },
   secondary: {
     backgroundColor: colors.white,
@@ -76,11 +80,11 @@ const styles = StyleSheet.create({
     opacity: 0.82,
   },
   label: {
-    fontSize: 15,
-    fontWeight: important,
+    fontSize: text.body,
+    fontFamily: face.important, fontWeight: '400',
   },
-  onGold: {
-    color: colors.greenDeep,
+  onPrimary: {
+    color: colors.cream,
   },
   onDanger: {
     color: colors.cream,

@@ -23,7 +23,7 @@ import {
 } from '../utils/calendar';
 import {formatDay, parseShopDate, todayISO} from '../utils/dates';
 import {colors} from '../theme/colors';
-import {fonts, important} from '../theme/type';
+import {important, face} from '../theme/type';
 import {radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
 
@@ -271,14 +271,14 @@ const styles = StyleSheet.create({
   headerIcon: {
     color: colors.cream,
     fontSize: 26,
-    fontWeight: '500',
+    fontFamily: face.important, fontWeight: '400',
   },
   headerCopy: {
     flex: 1,
   },
   title: {
     color: colors.cream,
-    fontFamily: fonts.serif,
+    fontFamily: face.display,
     fontSize: 22,
   },
   content: {
@@ -297,9 +297,9 @@ const styles = StyleSheet.create({
     borderTopColor: colors.gold,
     borderTopWidth: 3,
     borderWidth: 1,
-    paddingBottom: padY,
+    paddingBottom: spacing.sm,
     paddingHorizontal: padY,
-    paddingTop: padY,
+    paddingTop: spacing.sm,
   },
   monthRow: {
     alignItems: 'center',
@@ -321,25 +321,24 @@ const styles = StyleSheet.create({
   },
   month: {
     color: colors.ink,
-    fontFamily: fonts.serif,
+    fontFamily: face.display,
     fontSize: 20,
-    fontWeight: important,
   },
   year: {
     color: colors.gold,
     fontSize: 12,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginTop: spacing.xs,
   },
   weekRow: {
     flexDirection: 'row',
-    marginTop: padY,
+    marginTop: spacing.sm,
   },
   weekday: {
     color: colors.muted,
     flex: 1,
     fontSize: 12,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     textAlign: 'center',
   },
   grid: {
@@ -348,16 +347,16 @@ const styles = StyleSheet.create({
   },
   cell: {
     alignItems: 'center',
-    height: 34,
+    height: 36,
     justifyContent: 'center',
     width: '14.28%',
   },
   day: {
     alignItems: 'center',
-    borderRadius: 13,
-    height: 26,
+    borderRadius: 14,
+    height: 28,
     justifyContent: 'center',
-    width: 26,
+    width: 28,
   },
   dayToday: {
     borderColor: colors.gold,
@@ -372,17 +371,17 @@ const styles = StyleSheet.create({
   },
   dayTextToday: {
     color: colors.green,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   dayTextSelected: {
     color: colors.cream,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   dot: {
-    borderRadius: 3,
-    height: 5,
-    marginTop: spacing.xs,
-    width: 5,
+    borderRadius: 2,
+    height: 4,
+    marginTop: 2,
+    width: 4,
   },
   dotOn: {
     backgroundColor: colors.gold,
@@ -392,7 +391,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.xs,
     paddingHorizontal: padY,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   legendDot: {
     backgroundColor: colors.gold,
@@ -408,7 +407,7 @@ const styles = StyleSheet.create({
   todayLink: {
     color: colors.green,
     fontSize: 12,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   dayHead: {
     alignItems: 'baseline',
@@ -420,9 +419,8 @@ const styles = StyleSheet.create({
   dayTitle: {
     color: colors.ink,
     flex: 1,
-    fontFamily: fonts.serif,
+    fontFamily: face.display,
     fontSize: 16,
-    fontWeight: important,
   },
   dayCount: {
     color: colors.muted,
@@ -448,7 +446,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
     flex: 1,
     fontSize: 14,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   orderItem: {
     color: colors.green,

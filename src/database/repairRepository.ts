@@ -8,7 +8,7 @@ import type {
   SqlRow,
 } from '../types';
 import {REPAIR_STATUSES} from '../types';
-import {rowsOf} from './rows';
+import {groupByParent, rowsOf} from './rows';
 
 function blankToNull(value: string | null | undefined): string | null {
   const text = String(value || '').trim();
@@ -148,6 +148,24 @@ export function replaceRepairPieces(
   });
 }
 
+function attachRepairPieces(executor: SqlExecutor, repairs: Repair[]): Repair[] {
+  if (repairs.length === 0) {
+    return repairs;
+  }
+  const ids = repairs.map(item => item.id);
+  const pieces = groupByParent(
+    rowsOf(
+      executor.execute(
+        `SELECT * FROM repair_items WHERE repair_id IN (${ids.map(() => '?').join(', ')}) ORDER BY id ASC`,
+        ids,
+      ),
+    ),
+    'repair_id',
+    mapPiece,
+  );
+  return repairs.map(item => ({...item, pieces: pieces.get(item.id) ?? []}));
+}
+
 function withPieces(executor: SqlExecutor, repair: Repair | null): Repair | null {
   if (!repair) {
     return null;
@@ -161,18 +179,19 @@ export function getRepairById(executor: SqlExecutor, id: number): Repair | null 
 }
 
 export function listRepairsByCustomer(executor: SqlExecutor, customerId: number): Repair[] {
-  return rowsOf(
+  const rows = rowsOf(
     executor.execute(
       `SELECT * FROM repairs WHERE customer_id = ? ORDER BY received_date DESC, id DESC`,
       [Number(customerId)],
     ),
-  ).map(row => withPieces(executor, mapRepair(row)) as Repair);
+  ).map(row => mapRepair(row) as Repair);
+  return attachRepairPieces(executor, rows);
 }
 
 export function searchRepairs(executor: SqlExecutor, query = ''): Repair[] {
   const term = `%${String(query || '').trim()}%`;
   const hasQuery = String(query || '').trim().length > 0;
-  return rowsOf(
+  const rows = rowsOf(
     executor.execute(
       `SELECT * FROM repairs
        WHERE (? = 0) OR customer_name LIKE ? OR phone LIKE ? OR address LIKE ?
@@ -189,5 +208,6 @@ export function searchRepairs(executor: SqlExecutor, query = ''): Repair[] {
        END, received_date DESC, id DESC`,
       [hasQuery ? 1 : 0, term, term, term, term, term, term, term, term, term],
     ),
-  ).map(row => withPieces(executor, mapRepair(row)) as Repair);
+  ).map(row => mapRepair(row) as Repair);
+  return attachRepairPieces(executor, rows);
 }

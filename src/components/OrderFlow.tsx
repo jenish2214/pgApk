@@ -4,7 +4,7 @@ import type {OrderStatus} from '../types';
 import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {important, face} from '../theme/type';
 
 const STEPS: {status: OrderStatus; label: string}[] = [
   {status: 'Pending', label: 'Order placed'},
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   },
   labelOn: {
     color: colors.green,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   labelActive: {
     color: colors.ink,
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   cancelled: {
     color: colors.danger,
     fontSize: 15,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginTop: spacing.sm,
   },
 });

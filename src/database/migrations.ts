@@ -385,6 +385,13 @@ const MIGRATIONS = [
       );
     },
   },
+  {
+    version: 12,
+    up(tx: SqlExecutor) {
+      tx.execute('CREATE INDEX idx_orders_updated ON orders(updated_at, id)');
+      tx.execute('CREATE INDEX idx_orders_customer_updated ON orders(customer_id, updated_at)');
+    },
+  },
 ];
 
 export async function migrate(db: NitroSQLiteConnection) {

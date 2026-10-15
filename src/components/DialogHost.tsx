@@ -4,7 +4,7 @@ import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {gap, radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {important, face} from '../theme/type';
 import {subscribeDialog, type DialogRequest} from '../utils/confirm';
 
 export default function DialogHost() {
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   title: {
     color: colors.green,
     fontSize: 18,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginBottom: spacing.sm,
   },
   line: {
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   when: {
     color: colors.muted,
     fontSize: 13,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginTop: padY,
   },
   actions: {
@@ -147,15 +147,15 @@ const styles = StyleSheet.create({
   cancelText: {
     color: colors.green,
     fontSize: 15,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   confirm: {
     backgroundColor: colors.gold,
   },
   confirmText: {
-    color: colors.greenDeep,
+    color: colors.cream,
     fontSize: 15,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   danger: {
     backgroundColor: colors.danger,
@@ -163,6 +163,6 @@ const styles = StyleSheet.create({
   dangerText: {
     color: colors.cream,
     fontSize: 15,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
 });

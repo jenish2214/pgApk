@@ -10,15 +10,17 @@ import PlusButton from '../components/PlusButton';
 import Screen from '../components/Screen';
 import ShopHeader from '../components/ShopHeader';
 import {listInquiries} from '../services/inquiryService';
+import {listWindow} from '../utils/listWindow';
+import {useDebouncedValue} from '../utils/useDebouncedValue';
 import {showNotice} from '../utils/confirm';
 import {callCustomer} from '../utils/whatsappUtils';
 import {categoryImage} from '../utils/categories';
 import {formatDay} from '../utils/dates';
 import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
-import {radius} from '../theme/layout';
+import {cardLift, radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {important, face} from '../theme/type';
 
 const STATUS_LABEL = {
   Waiting: 'Waiting',
@@ -31,21 +33,21 @@ type Props = NativeStackScreenProps<ShopStackParamList, 'InquiryHome'>;
 export default function InquiriesScreen({navigation}: Props) {
   const {t} = useLanguage();
   const [query, setQuery] = useState('');
+  const settledQuery = useDebouncedValue(query);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const load = useCallback(() => {
-    setLoading(true);
     try {
-      setInquiries(listInquiries(query));
+      setInquiries(listInquiries(settledQuery));
       setError('');
     } catch (loadError: unknown) {
       setError(errorMessage(loadError, 'Inquiries could not be loaded.'));
     } finally {
       setLoading(false);
     }
-  }, [query]);
+  }, [settledQuery]);
 
   useFocusEffect(
     useCallback(() => {
@@ -64,6 +66,7 @@ export default function InquiriesScreen({navigation}: Props) {
       <FlatList
         data={inquiries}
         keyExtractor={item => String(item.id)}
+        {...listWindow}
         contentContainerStyle={styles.list}
         keyboardShouldPersistTaps="handled"
         ListHeaderComponent={
@@ -95,7 +98,7 @@ export default function InquiriesScreen({navigation}: Props) {
             <Pressable
               accessibilityRole="button"
               onPress={() => navigation.navigate('AddEditInquiry', {inquiryId: item.id})}
-              style={styles.card}>
+              style={({pressed}) => [styles.card, pressed && styles.pressed]}>
               {photo ? (
                 <Image source={{uri: photo}} style={styles.photo} />
               ) : (
@@ -168,6 +171,10 @@ const styles = StyleSheet.create({
     gap: padY,
     marginBottom: padY,
     padding: padY,
+    ...cardLift,
+  },
+  pressed: {
+    opacity: 0.86,
   },
   photo: {
     borderRadius: radius,
@@ -186,13 +193,13 @@ const styles = StyleSheet.create({
     color: colors.ink,
     flex: 1,
     fontSize: 15,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginRight: spacing.sm,
   },
   status: {
     color: colors.green,
     fontSize: 12,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   item: {
     color: colors.ink,
@@ -211,7 +218,7 @@ const styles = StyleSheet.create({
   callText: {
     color: colors.green,
     fontSize: 13,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   meta: {
     color: colors.muted,

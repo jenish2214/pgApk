@@ -7,21 +7,27 @@ import {prepareDatabase} from './src/database/database';
 import DialogHost from './src/components/DialogHost';
 import {LanguageProvider, useLanguage} from './src/i18n/LanguageProvider';
 import AppNavigator from './src/navigation/AppNavigator';
-import {refreshOrderReminder, watchOrderReminder} from './src/services/orderReminders';
+import {refreshOrderReminder, requestStartupPermissions, watchOrderReminder} from './src/services/orderReminders';
 import {subscribeShopChanges} from './src/services/shopEvents';
 import {colors} from './src/theme/colors';
 import {ThemeProvider} from './src/theme/ThemeProvider';
 import {radius} from './src/theme/layout';
-import {fonts} from './src/theme/type';
+import {face} from './src/theme/type';
+import {spacing} from './src/theme/spacing';
 
-function BootScreen({error, onRetry}: {error: string; onRetry: () => void}) {
+function BootScreen({
+  error,
+  message,
+  onRetry,
+}: {
+  error: string;
+  message: string;
+  onRetry: () => void;
+}) {
   const {t} = useLanguage();
   return (
     <View style={styles.boot}>
-      <View style={styles.mark}>
-        <Text style={styles.markText}>P</Text>
-      </View>
-      <Text style={styles.title}>Shree Pragati Gold</Text>
+      <Text style={styles.title}>Pragati Gold</Text>
       {error ? (
         <>
           <Text style={styles.message}>{t(error)}</Text>
@@ -31,8 +37,8 @@ function BootScreen({error, onRetry}: {error: string; onRetry: () => void}) {
         </>
       ) : (
         <>
-          <ActivityIndicator color={colors.gold} />
-          <Text style={styles.message}>{t('Opening shop records…')}</Text>
+          <ActivityIndicator color={colors.cream} />
+          <Text style={styles.message}>{t(message)}</Text>
         </>
       )}
     </View>
@@ -42,23 +48,43 @@ function BootScreen({error, onRetry}: {error: string; onRetry: () => void}) {
 export default function App() {
   const [ready, setReady] = useState(false);
   const [splashHold, setSplashHold] = useState(true);
+  const [splashMessage, setSplashMessage] = useState('Opening shop records…');
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setSplashHold(false), 1200);
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     let active = true;
     setError('');
     setReady(false);
+    setSplashHold(true);
+    setSplashMessage('Opening shop records…');
+    const started = Date.now();
     prepareDatabase()
-      .then(() => {
-        if (active) {
-          setReady(true);
+      .then(async () => {
+        if (!active) {
+          return;
         }
+        setSplashMessage('Allow notifications for order reminders.');
+        const permission = await requestStartupPermissions();
+        if (!active) {
+          return;
+        }
+        setSplashMessage(
+          permission === 'granted'
+            ? 'Notifications are ready.'
+            : 'You can allow notifications later in Settings.',
+        );
+        const remaining = 900 - (Date.now() - started);
+        if (remaining > 0) {
+          await new Promise<void>(resolve => {
+            setTimeout(resolve, remaining);
+          });
+        }
+        if (!active) {
+          return;
+        }
+        setReady(true);
+        setSplashHold(false);
       })
       .catch(openError => {
         if (active) {
@@ -90,9 +116,13 @@ export default function App() {
       <SafeAreaProvider>
         <LanguageProvider ready={ready}>
         <ThemeProvider ready={ready}>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle="dark-content" />
         {ready && !splashHold ? <AppNavigator /> : (
-          <BootScreen error={error} onRetry={() => setAttempt(value => value + 1)} />
+          <BootScreen
+            error={error}
+            message={splashMessage}
+            onRetry={() => setAttempt(value => value + 1)}
+          />
         )}
         <DialogHost />
         </ThemeProvider>
@@ -111,43 +141,29 @@ const styles = StyleSheet.create({
     backgroundColor: colors.green,
     flex: 1,
     justifyContent: 'center',
-    padding: 24,
-  },
-  mark: {
-    alignItems: 'center',
-    borderColor: colors.gold,
-    borderRadius: 28,
-    borderWidth: 1.5,
-    height: 56,
-    justifyContent: 'center',
-    marginBottom: 16,
-    width: 56,
-  },
-  markText: {
-    color: colors.gold,
-    fontFamily: fonts.serif,
-    fontSize: 28,
+    padding: spacing.xl,
+    gap: spacing.md,
   },
   title: {
     color: colors.cream,
-    fontFamily: fonts.serif,
+    fontFamily: face.display,
     fontSize: 32,
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   message: {
-    color: colors.goldSoft,
-    marginTop: 12,
+    color: colors.cream,
+    marginTop: spacing.md,
     textAlign: 'center',
   },
   retry: {
-    backgroundColor: colors.gold,
+    backgroundColor: colors.cream,
     borderRadius: radius,
-    marginTop: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    marginTop: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
   },
   retryText: {
-    color: colors.greenDeep,
-    fontWeight: '800',
+    color: colors.green,
+    fontFamily: face.display, fontWeight: '400',
   },
 });

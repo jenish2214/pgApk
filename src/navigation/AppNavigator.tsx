@@ -31,7 +31,7 @@ import {ManageMenu} from '../components/ManageDrawer';
 import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
-import {important} from '../theme/type';
+import {text, face} from '../theme/type';
 import ShopTabBar from './ShopTabBar';
 import {showNotice} from '../utils/confirm';
 
@@ -107,7 +107,7 @@ function HeaderBackButton() {
       hitSlop={6}
       style={styles.back}>
       <Animated.View style={{opacity, transform: [{translateX: slide}]}}>
-        <BackIcon color={colors.cream} />
+        <BackIcon color={colors.ink} />
       </Animated.View>
     </Pressable>
   );
@@ -116,16 +116,20 @@ function HeaderBackButton() {
 function HeaderLeading() {
   return (
     <View style={styles.leading}>
-      <ManageMenu />
+      <ManageMenu color={colors.ink} />
       <HeaderBackButton />
     </View>
   );
 }
 
 const stackScreenOptions = {
-  headerStyle: {backgroundColor: colors.green},
-  headerTintColor: colors.cream,
-  headerTitleStyle: {fontWeight: important, fontSize: 17},
+  headerStyle: {
+    backgroundColor: colors.white,
+    borderBottomColor: colors.line,
+    borderBottomWidth: 1,
+  },
+  headerTintColor: colors.ink,
+  headerTitleStyle: {fontFamily: face.display, fontWeight: '400' as const, fontSize: text.title, color: colors.ink},
   headerShadowVisible: false,
   headerBackVisible: false,
   headerLeft: HeaderLeading,

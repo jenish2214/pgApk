@@ -22,9 +22,9 @@ import {useLanguage} from '../i18n/LanguageProvider';
 import {timeGreeting} from '../utils/greeting';
 import {nextOrderStatus, nextStatusLabel} from '../utils/orderStatus';
 import {colors} from '../theme/colors';
-import {gap, radius} from '../theme/layout';
-import {padX, padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {cardLift, radius} from '../theme/layout';
+import {padX, spacing} from '../theme/spacing';
+import {text, face} from '../theme/type';
 
 type Tile = {
   key: 'customers' | 'pending' | 'preparing' | 'ready';
@@ -195,7 +195,7 @@ export default function DashboardScreen({navigation}: Props) {
                 key={tile.key}
                 accessibilityRole="button"
                 onPress={() => openTile(tile)}
-                style={styles.tile}>
+                style={({pressed}) => [styles.tile, pressed && styles.pressed]}>
                 <Text style={styles.count}>{counts[tile.key]}</Text>
                 <Text style={styles.tileLabel}>{t(tile.label)}</Text>
               </Pressable>
@@ -207,7 +207,7 @@ export default function DashboardScreen({navigation}: Props) {
                 key={tile.key}
                 accessibilityRole="button"
                 onPress={() => openTile(tile)}
-                style={styles.tile}>
+                style={({pressed}) => [styles.tile, pressed && styles.pressed]}>
                 <Text style={styles.count}>{counts[tile.key]}</Text>
                 <Text style={styles.tileLabel}>{t(tile.label)}</Text>
               </Pressable>
@@ -225,7 +225,7 @@ export default function DashboardScreen({navigation}: Props) {
               key={jangad.id}
               accessibilityRole="button"
               onPress={() => openJangad(jangad.id)}
-              style={styles.jangadCard}>
+              style={({pressed}) => [styles.jangadCard, pressed && styles.pressed]}>
               <View style={styles.jangadRow}>
                 <Text style={styles.jangadName}>{jangad.shopName}</Text>
                 <Text style={styles.jangadPending}>{t('Pending')}</Text>
@@ -300,16 +300,16 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: spacing.xl,
     paddingHorizontal: padX,
-    paddingTop: padY,
+    paddingTop: spacing.md,
   },
   error: {
     color: colors.danger,
-    marginBottom: padY,
+    marginBottom: spacing.md,
   },
   metricRow: {
     flexDirection: 'row',
-    gap,
-    marginBottom: gap,
+    gap: spacing.md,
+    marginBottom: spacing.lg,
   },
   tile: {
     backgroundColor: colors.white,
@@ -317,18 +317,21 @@ const styles = StyleSheet.create({
     borderRadius: radius,
     borderWidth: 1,
     flex: 1,
-    paddingHorizontal: padY,
-    paddingVertical: padY,
+    padding: spacing.lg,
+    ...cardLift,
+  },
+  pressed: {
+    opacity: 0.86,
   },
   count: {
     color: colors.green,
-    fontSize: 22,
-    fontWeight: important,
+    fontSize: text.count,
+    fontFamily: face.display, fontWeight: '400',
   },
   tileLabel: {
     color: colors.muted,
-    fontSize: 13,
-    fontWeight: important,
+    fontSize: text.meta,
+    fontFamily: face.regular, fontWeight: '400',
     marginTop: spacing.xs,
   },
   sectionRow: {
@@ -339,35 +342,36 @@ const styles = StyleSheet.create({
   },
   section: {
     color: colors.ink,
-    fontSize: 16,
-    fontWeight: important,
-    marginBottom: padY,
+    fontSize: text.section,
+    fontFamily: face.important, fontWeight: '400',
+    marginBottom: spacing.md,
     marginTop: spacing.sm,
   },
   empty: {
     color: colors.muted,
-    fontSize: 14,
-    marginBottom: padY,
+    fontSize: text.label,
+    marginBottom: spacing.md,
   },
   update: {
     alignSelf: 'flex-start',
     backgroundColor: colors.green,
     borderRadius: radius,
-    paddingHorizontal: padY,
+    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
   },
   updateText: {
     color: colors.cream,
-    fontSize: 13,
-    fontWeight: important,
+    fontSize: text.meta,
+    fontFamily: face.important, fontWeight: '400',
   },
   jangadCard: {
     backgroundColor: colors.white,
     borderColor: colors.line,
     borderRadius: radius,
     borderWidth: 1,
-    marginBottom: padY,
-    padding: padY,
+    marginBottom: spacing.md,
+    padding: spacing.lg,
+    ...cardLift,
   },
   jangadRow: {
     alignItems: 'center',
@@ -377,24 +381,24 @@ const styles = StyleSheet.create({
   jangadName: {
     color: colors.ink,
     flex: 1,
-    fontSize: 16,
-    fontWeight: important,
+    fontSize: text.section,
+    fontFamily: face.important, fontWeight: '400',
     marginRight: spacing.sm,
   },
   jangadPending: {
     color: colors.green,
-    fontSize: 12,
-    fontWeight: important,
+    fontSize: text.small,
+    fontFamily: face.important, fontWeight: '400',
   },
   jangadLine: {
     color: colors.ink,
-    fontSize: 14,
-    fontWeight: important,
+    fontSize: text.label,
+    fontFamily: face.important, fontWeight: '400',
     marginTop: spacing.xs,
   },
   jangadWhen: {
     color: colors.muted,
-    fontSize: 13,
+    fontSize: text.meta,
     marginTop: spacing.xs,
   },
 });

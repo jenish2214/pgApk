@@ -9,8 +9,8 @@ import {subscribeShopChanges} from '../services/shopEvents';
 import type {TabRouteName} from '../types';
 import {colors} from '../theme/colors';
 import {useColors} from '../theme/ThemeProvider';
-import {padX, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {spacing} from '../theme/spacing';
+import {display, important, regular, text, face} from '../theme/type';
 import {radius} from '../theme/layout';
 
 const FORM_SCREENS = new Set([
@@ -71,7 +71,7 @@ export default function ShopTabBar({state, descriptors, navigation}: BottomTabBa
   }
 
   return (
-    <View style={[styles.safe, {backgroundColor: palette.ivory, paddingBottom: Math.max(insets.bottom, 8)}]}>
+    <View style={[styles.safe, {backgroundColor: palette.white, paddingBottom: Math.max(insets.bottom, 8)}]}>
       <View style={[styles.row, {backgroundColor: palette.white}]}>
         {state.routes.map((route, index) => {
           const focused = state.index === index;
@@ -132,7 +132,11 @@ export default function ShopTabBar({state, descriptors, navigation}: BottomTabBa
               }
               onPress={onPress}
               android_ripple={{color: 'transparent'}}
-              style={styles.button}>
+              style={({pressed}) => [
+                styles.button,
+                focused && {backgroundColor: palette.greenSoft},
+                pressed && styles.pressed,
+              ]}>
               <View style={styles.iconWrap}>
                 <TabIcon name={tabName} color={tint} />
                 {waiting > 0 ? (
@@ -142,7 +146,7 @@ export default function ShopTabBar({state, descriptors, navigation}: BottomTabBa
                 ) : null}
               </View>
               <Text
-                style={[styles.label, {color: tint}]}
+                style={[styles.label, {color: tint}, focused ? null : styles.labelQuiet]}
                 numberOfLines={1}
                 adjustsFontSizeToFit
                 minimumFontScale={0.75}>
@@ -158,21 +162,16 @@ export default function ShopTabBar({state, descriptors, navigation}: BottomTabBa
 
 const styles = StyleSheet.create({
   safe: {
-    backgroundColor: colors.ivory,
-    paddingHorizontal: padX,
+    backgroundColor: colors.white,
+    borderTopColor: colors.line,
+    borderTopWidth: StyleSheet.hairlineWidth,
     paddingTop: spacing.sm,
   },
   row: {
     backgroundColor: colors.white,
-    borderRadius: 28,
-    elevation: 8,
     flexDirection: 'row',
     paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.sm,
-    shadowColor: colors.ink,
-    shadowOffset: {width: 0, height: 8},
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
+    paddingVertical: spacing.xs,
   },
   button: {
     alignItems: 'center',
@@ -181,8 +180,12 @@ const styles = StyleSheet.create({
     flexBasis: 0,
     justifyContent: 'center',
     minWidth: 0,
+    marginHorizontal: spacing.xs,
     paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.sm,
+  },
+  pressed: {
+    opacity: 0.72,
   },
   iconWrap: {
     alignItems: 'center',
@@ -203,14 +206,17 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: colors.white,
-    fontSize: 10,
-    fontWeight: '800',
+    fontSize: text.tiny,
+    fontFamily: face.display, fontWeight: '400',
   },
   label: {
-    fontSize: 12,
-    fontWeight: important,
+    fontSize: text.small,
+    fontFamily: face.important, fontWeight: '400',
     marginTop: spacing.xs,
     textAlign: 'center',
     width: '100%',
+  },
+  labelQuiet: {
+    fontFamily: face.regular, fontWeight: '400',
   },
 });

@@ -13,7 +13,6 @@ import {
   type OrderInput,
   type RepairInput,
 } from '../types';
-import {isProductCategory} from './categories';
 import {dayKey, isValidDateTime, isValidDay, parseShopDate} from './dates';
 import {isOrderStatus} from './orderStatus';
 import {formatTagNumber} from './tags';
@@ -65,8 +64,13 @@ export function validateOrder(input: OrderInput): FieldErrors {
       errors.itemName = 'Each piece needs its own tag number.';
     }
   }
-  if (pieces.some(piece => !isProductCategory(piece.category))) {
-    errors.category = 'Choose a category for every piece.';
+  if (
+    pieces.some(piece => {
+      const category = String(piece.category || '').trim();
+      return !category || category === 'Other';
+    })
+  ) {
+    errors.category = 'Enter your category.';
   }
   if (!isValidDay(input.orderDate)) {
     errors.orderDate = 'Choose the order date.';

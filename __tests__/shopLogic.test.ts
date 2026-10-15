@@ -17,6 +17,7 @@ import {formatRupees} from '../src/utils/money';
 import {formatOrderNumber, nextSequence} from '../src/utils/orderNumbers';
 import {tryUnlockRepair} from '../src/services/repairAccess';
 import {validateCustomer, validateJangad, validateOrder} from '../src/utils/validation';
+import {accessStatus, alarmToneId, batteryRestrictionStatus, reminderFullScreenNote, reminderProblems, sirenDurationMs, snoozeMinutes} from '../src/utils/reminderHealth';
 import {buildReadyMessage, whatsAppPhone, whatsappUrl} from '../src/utils/whatsappUtils';
 
 test('builds the ready-for-collection WhatsApp message', () => {
@@ -65,6 +66,26 @@ test('requires a name, phone, item, and date', () => {
   expect(orderErrors.customerId).toBeTruthy();
   expect(orderErrors.itemName).toBeTruthy();
   expect(orderErrors.orderDate).toBeTruthy();
+  const ownCategory = validateOrder({
+    customerId: 1,
+    itemName: 'Nose pin',
+    orderDate: '2026-10-12 10:00',
+    expectedDeliveryDate: '',
+    status: 'Pending',
+    category: 'Nose pin',
+    pieces: [{tagNumber: 'A1', itemName: 'Nose pin', category: 'Nose pin'}],
+  });
+  expect(ownCategory.category).toBeFalsy();
+  const missingCategory = validateOrder({
+    customerId: 1,
+    itemName: 'Nose pin',
+    orderDate: '2026-10-12 10:00',
+    expectedDeliveryDate: '',
+    status: 'Pending',
+    category: 'Other',
+    pieces: [{tagNumber: 'A1', itemName: 'Nose pin', category: 'Other'}],
+  });
+  expect(missingCategory.category).toBe('Enter your category.');
 });
 
 test('marks calendar days from order and delivery dates', () => {
@@ -299,4 +320,60 @@ test('requires shop, people, and a date with time on a jangad', () => {
     ],
   });
   expect(Object.keys(ready)).toHaveLength(0);
+});
+
+test('explains reminder problems without hiding a failed schedule', () => {
+  expect(sirenDurationMs('10000')).toBe(10000);
+  expect(sirenDurationMs('30000')).toBe(30000);
+  expect(sirenDurationMs('999')).toBe(20000);
+  expect(snoozeMinutes('5')).toBe(5);
+  expect(snoozeMinutes('15')).toBe(15);
+  expect(snoozeMinutes('8')).toBe(10);
+
+  const quiet = reminderProblems({
+    notifications: 'ok',
+    exact: 'ok',
+    channel: 'ok',
+    vibration: 'ok',
+    battery: 'ok',
+    fullScreen: 'available',
+    alarmVolume: 40,
+    timing: 'exact',
+    scheduleError: '',
+  });
+  expect(quiet).toEqual([]);
+
+  const blocked = reminderProblems({
+    notifications: 'off',
+    exact: 'off',
+    channel: 'off',
+    vibration: 'off',
+    battery: 'off',
+    fullScreen: 'unavailable',
+    alarmVolume: 0,
+    timing: 'unscheduled',
+    scheduleError: 'The reminder could not be scheduled.',
+  });
+  expect(blocked).toContain('Notifications are off, so this phone will not show reminders.');
+  expect(blocked).toContain('The reminder could not be scheduled.');
+  expect(blocked.filter(line => line.startsWith('Exact alarms')).length).toBe(1);
+  expect(reminderFullScreenNote({
+    notifications: 'ok',
+    exact: 'ok',
+    channel: 'ok',
+    vibration: 'ok',
+    battery: 'ok',
+    fullScreen: 'unavailable',
+    alarmVolume: 50,
+    timing: 'exact',
+    scheduleError: '',
+  })).toContain('full-screen');
+  expect(accessStatus('ok', 'permission')).toBe('Enabled');
+  expect(accessStatus('off', 'permission')).toBe('Permission required');
+  expect(accessStatus('unknown', 'disabled')).toBe('Unable to verify');
+  expect(batteryRestrictionStatus('ok')).toBe('Disabled');
+  expect(batteryRestrictionStatus('off')).toBe('Enabled');
+  expect(batteryRestrictionStatus('unknown')).toBe('Unable to verify');
+  expect(alarmToneId('alarm')).toBe('alarm');
+  expect(alarmToneId('other')).toBe('siren');
 });

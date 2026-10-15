@@ -20,7 +20,7 @@ import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {gap, radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
-import {important} from '../theme/type';
+import {important, face} from '../theme/type';
 
 type Props = NativeStackScreenProps<ShopStackParamList, 'OrderDetails'>;
 
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   alertTitle: {
     color: colors.green,
     fontSize: 15,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   alertDetail: {
     color: colors.ink,
@@ -331,12 +331,12 @@ const styles = StyleSheet.create({
   pieceName: {
     color: colors.ink,
     fontSize: 16,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   pieceCategory: {
     color: colors.gold,
     fontSize: 13,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginTop: spacing.xs,
   },
   pieceNote: {
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   number: {
     color: colors.gold,
     fontSize: 14,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   event: {
     borderLeftColor: colors.gold,
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
   eventLabel: {
     color: colors.ink,
     fontSize: 15,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   eventDetail: {
     color: colors.green,
@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
   item: {
     color: colors.ink,
     fontSize: 22,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginBottom: padY,
     marginTop: spacing.xs,
   },
@@ -396,20 +396,20 @@ const styles = StyleSheet.create({
   detailLabel: {
     color: colors.muted,
     fontSize: 12,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     letterSpacing: 0.4,
     textTransform: 'uppercase',
   },
   detailValue: {
     color: colors.ink,
     fontSize: 16,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginTop: spacing.xs,
   },
   section: {
     color: colors.ink,
     fontSize: 18,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
     marginTop: spacing.lg,
   },
   statuses: {
@@ -420,9 +420,12 @@ const styles = StyleSheet.create({
     marginTop: padY,
   },
   chip: {
+    alignItems: 'center',
     borderColor: colors.line,
     borderRadius: radius,
     borderWidth: 1,
+    justifyContent: 'center',
+    minHeight: 40,
     paddingHorizontal: padY,
     paddingVertical: spacing.sm,
   },
@@ -433,7 +436,7 @@ const styles = StyleSheet.create({
   chipText: {
     color: colors.ink,
     fontSize: 13,
-    fontWeight: important,
+    fontFamily: face.important, fontWeight: '400',
   },
   chipTextSelected: {
     color: colors.cream,
