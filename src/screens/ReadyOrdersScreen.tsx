@@ -102,7 +102,6 @@ export default function ReadyOrdersScreen({navigation}: Props) {
       <ShopHeader
         title="Ready"
         menu
-        onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
       />
       <FlatList
         data={orders}

@@ -9,6 +9,7 @@ import PlusButton from '../components/PlusButton';
 import AppInput from '../components/AppInput';
 import DateTimeField from '../components/DateTimeField';
 import EmptyState from '../components/EmptyState';
+import LockIcon from '../components/LockIcon';
 import RepairLock, {useRepairAccess} from '../components/RepairLock';
 import Screen from '../components/Screen';
 import {listCustomers} from '../services/customerService';
@@ -20,7 +21,7 @@ import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {gap, radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
-import {important, face} from '../theme/type';
+import {face, text} from '../theme/type';
 
 const EMPTY: RepairInput = {
   customerId: null,
@@ -248,7 +249,30 @@ export default function AddEditRepairScreen({navigation, route}: Props) {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled">
         {error ? <Text style={styles.error}>{t(error)}</Text> : null}
-        <View pointerEvents={unlocked ? 'auto' : 'none'}>
+        {unlocked ? null : (
+          <View style={styles.locked}>
+            <View style={styles.lockedBadge}>
+              <LockIcon color={colors.green} />
+            </View>
+            <View style={styles.lockedCopy}>
+              <Text style={styles.lockedTitle}>{t('View only')}</Text>
+              <Text style={styles.lockedNote}>{t('Sign in to change this repair.')}</Text>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setSigningIn(true)}
+              style={({pressed}) => [styles.lockedButton, pressed && styles.lockedPressed]}>
+              <Text style={styles.lockedButtonText}>{t('Sign in')}</Text>
+            </Pressable>
+          </View>
+        )}
+        <Pressable
+          disabled={unlocked}
+          accessible={!unlocked}
+          accessibilityRole={unlocked ? undefined : 'button'}
+          accessibilityLabel={unlocked ? undefined : t('Sign in to edit')}
+          onPress={() => setSigningIn(true)}>
+        <View pointerEvents={unlocked ? 'auto' : 'none'} style={unlocked ? null : styles.dimmed}>
         <AppInput
           label="Find customer"
           value={customerQuery}
@@ -392,6 +416,7 @@ export default function AddEditRepairScreen({navigation, route}: Props) {
           })}
         </View>
         </View>
+        </Pressable>
         {unlocked ? (
           <AppButton
             label={saving ? 'Saving…' : repairId ? 'Update repair' : 'Save repair'}
@@ -407,6 +432,56 @@ export default function AddEditRepairScreen({navigation, route}: Props) {
 }
 
 const styles = StyleSheet.create({
+  locked: {
+    alignItems: 'center',
+    backgroundColor: colors.greenSoft,
+    borderRadius: radius,
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginBottom: padY,
+    padding: spacing.md,
+  },
+  lockedBadge: {
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderRadius: 22,
+    height: 44,
+    justifyContent: 'center',
+    width: 44,
+  },
+  lockedCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  lockedTitle: {
+    color: colors.ink,
+    fontSize: text.section,
+    fontFamily: face.important, fontWeight: '400',
+  },
+  lockedNote: {
+    color: colors.muted,
+    fontSize: text.meta,
+    fontFamily: face.regular, fontWeight: '400',
+  },
+  lockedButton: {
+    alignItems: 'center',
+    backgroundColor: colors.green,
+    borderRadius: radius,
+    justifyContent: 'center',
+    minHeight: 44,
+    paddingHorizontal: spacing.lg,
+  },
+  lockedPressed: {
+    opacity: 0.85,
+  },
+  lockedButtonText: {
+    color: colors.white,
+    fontSize: text.label,
+    fontFamily: face.important, fontWeight: '400',
+  },
+  dimmed: {
+    opacity: 0.6,
+  },
   screen: {
     backgroundColor: colors.ivory,
     flex: 1,

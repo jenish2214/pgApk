@@ -54,7 +54,6 @@ export default function RepairsScreen({navigation}: Props) {
         <ShopHeader
           title="Repair"
           menu
-          onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
         />
         <FlatList
           data={repairs}

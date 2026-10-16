@@ -1,5 +1,6 @@
 import {useNavigation} from '@react-navigation/native';
 import type {NavigationProp, ParamListBase} from '@react-navigation/native';
+import {openShopScreen} from '../navigation/openShop';
 import React, {useEffect, useRef, useState} from 'react';
 import {
   Animated,
@@ -29,8 +30,7 @@ import {text, face} from '../theme/type';
 import TabIcon from './TabIcon';
 
 function openDrawerTarget(navigation: NavigationProp<ParamListBase>, target: DrawerTarget) {
-  const parent = navigation.getParent() ?? navigation;
-  parent.navigate(target.tab, {screen: target.screen});
+  openShopScreen(navigation, target.screen);
 }
 
 function currentScreen(navigation: NavigationProp<ParamListBase>): string {

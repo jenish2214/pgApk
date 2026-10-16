@@ -93,7 +93,7 @@ export default function DashboardScreen({navigation}: Props) {
       navigation.getParent()?.navigate('Customers');
       return;
     }
-    navigation.getParent()?.navigate('Manage', {screen: tile.target});
+    navigation.getParent()?.navigate('Manage', {screen: tile.target, initial: false});
   };
 
   const openAlert = (alert: DeskAlert) => {
@@ -105,7 +105,7 @@ export default function DashboardScreen({navigation}: Props) {
       navigation.navigate('AddEditInquiry', {inquiryId: alert.inquiryId});
       return;
     }
-    navigation.getParent()?.navigate('Manage', {screen: 'ReadyHome'});
+    navigation.getParent()?.navigate('Manage', {screen: 'ReadyHome', initial: false});
   };
 
   const applyStatus = async (order: Order, status: OrderStatus) => {
@@ -144,6 +144,7 @@ export default function DashboardScreen({navigation}: Props) {
     navigation.getParent()?.navigate('Manage', {
       screen: jangadId ? 'AddEditJangad' : 'JangadHome',
       params: jangadId ? {jangadId} : undefined,
+      initial: false,
     });
   };
 

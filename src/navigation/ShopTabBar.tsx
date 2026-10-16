@@ -1,5 +1,5 @@
 import type {BottomTabBarProps} from '@react-navigation/bottom-tabs';
-import {CommonActions, StackActions} from '@react-navigation/native';
+import {StackActions} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
 import {Keyboard, Pressable, StyleSheet, Text, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -10,7 +10,7 @@ import type {TabRouteName} from '../types';
 import {colors} from '../theme/colors';
 import {useColors} from '../theme/ThemeProvider';
 import {spacing} from '../theme/spacing';
-import {display, important, regular, text, face} from '../theme/type';
+import {text, face} from '../theme/type';
 import {capped, contentMax, radius} from '../theme/layout';
 
 const FORM_SCREENS = new Set([
@@ -89,38 +89,26 @@ export default function ShopTabBar({state, descriptors, navigation}: BottomTabBa
               type: 'tabPress',
               target: route.key,
               canPreventDefault: true,
-              data: {
-                behavior: {
-                  scrollToTop: focused,
-                  popToTop: focused,
-                },
-              },
             });
             if (event.defaultPrevented) {
+              return;
+            }
+            if (tabName === 'Manage') {
+              navigation.navigate('Manage', {screen: 'ManageHome', initial: false});
               return;
             }
             if (focused) {
               const nested = route.state;
               const nestedIndex = nested?.index ?? 0;
-              const nestedName = nested?.routes?.[nestedIndex]?.name;
               if (nested?.key && nestedIndex > 0) {
                 navigation.dispatch({
                   ...StackActions.popToTop(),
                   target: nested.key,
                 });
-              } else if (tabName === 'Manage' && nestedName && nestedName !== 'ManageHome') {
-                navigation.dispatch({
-                  ...CommonActions.navigate('Manage', {screen: 'ManageHome'}),
-                  target: state.key,
-                });
               }
               return;
             }
-            navigation.dispatch({
-              type: 'NAVIGATE',
-              target: state.key,
-              payload: {name: route.name},
-            });
+            navigation.navigate(route.name);
           };
 
           return (
@@ -133,11 +121,7 @@ export default function ShopTabBar({state, descriptors, navigation}: BottomTabBa
               }
               onPress={onPress}
               android_ripple={{color: 'transparent'}}
-              style={({pressed}) => [
-                styles.button,
-                focused && {backgroundColor: palette.greenSoft},
-                pressed && styles.pressed,
-              ]}>
+              style={({pressed}) => [styles.button, pressed && styles.pressed]}>
               <View style={styles.iconWrap}>
                 <TabIcon name={tabName} color={tint} />
                 {waiting > 0 ? (

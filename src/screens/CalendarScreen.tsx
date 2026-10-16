@@ -23,7 +23,7 @@ import {
 } from '../utils/calendar';
 import {formatDay, parseShopDate, todayISO} from '../utils/dates';
 import {colors} from '../theme/colors';
-import {important, face} from '../theme/type';
+import {face} from '../theme/type';
 import {radius} from '../theme/layout';
 import {padX, padY, spacing} from '../theme/spacing';
 
@@ -94,18 +94,7 @@ export default function CalendarScreen({navigation}: Props) {
     <Screen>
     <View style={styles.screen}>
       <View style={[styles.header, {paddingTop: insets.top + padY}]}>
-        {navigation.canGoBack() ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Back"
-            onPress={() => navigation.goBack()}
-            hitSlop={8}
-            style={styles.headerButton}>
-            <Text style={styles.headerIcon}>‹</Text>
-          </Pressable>
-        ) : (
-          <ManageMenu />
-        )}
+        <ManageMenu />
         <View style={styles.headerCopy}>
           <Text style={styles.title}>{t('Calendar')}</Text>
         </View>
@@ -261,17 +250,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingBottom: padY,
     paddingHorizontal: padX,
-  },
-  headerButton: {
-    alignItems: 'center',
-    height: 32,
-    justifyContent: 'center',
-    width: 32,
-  },
-  headerIcon: {
-    color: colors.cream,
-    fontSize: 26,
-    fontFamily: face.important, fontWeight: '400',
   },
   headerCopy: {
     flex: 1,

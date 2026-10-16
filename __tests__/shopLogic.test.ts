@@ -15,7 +15,7 @@ import {
 import {homeKicker, timeGreeting} from '../src/utils/greeting';
 import {formatRupees} from '../src/utils/money';
 import {formatOrderNumber, nextSequence} from '../src/utils/orderNumbers';
-import {tryUnlockRepair} from '../src/services/repairAccess';
+import {repairTriesLeft, repairWaitSeconds, tryUnlockRepair} from '../src/services/repairAccess';
 import {validateCustomer, validateJangad, validateOrder} from '../src/utils/validation';
 import {accessStatus, alarmToneId, batteryRestrictionStatus, reminderFullScreenNote, reminderProblems, sirenDurationMs, snoozeMinutes} from '../src/utils/reminderHealth';
 import {buildReadyMessage, whatsAppPhone, whatsappUrl} from '../src/utils/whatsappUtils';
@@ -290,6 +290,24 @@ test('keeps the desk alert list short and puts late work first', () => {
 test('opens repairs only for the shop sign-in', () => {
   expect(tryUnlockRepair('admin', 'wrong')).toBe(false);
   expect(tryUnlockRepair(' admin ', 'admin@123')).toBe(true);
+});
+
+test('pauses repair sign-in for 30 seconds after five wrong tries', () => {
+  const start = 1_000_000;
+  const clock = jest.spyOn(Date, 'now').mockReturnValue(start);
+  try {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      expect(tryUnlockRepair('admin', 'wrong')).toBe(false);
+    }
+    expect(repairWaitSeconds()).toBe(30);
+    expect(tryUnlockRepair('admin', 'admin@123')).toBe(false);
+    clock.mockReturnValue(start + 30_000);
+    expect(repairWaitSeconds()).toBe(0);
+    expect(repairTriesLeft()).toBe(5);
+    expect(tryUnlockRepair('admin', 'admin@123')).toBe(true);
+  } finally {
+    clock.mockRestore();
+  }
 });
 
 test('requires shop, people, and a date with time on a jangad', () => {

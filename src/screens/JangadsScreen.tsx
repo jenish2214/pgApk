@@ -82,7 +82,6 @@ export default function JangadsScreen({navigation}: Props) {
         <ShopHeader
           title="Jangad"
           menu
-          onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
         />
         <FlatList
           data={jangads}

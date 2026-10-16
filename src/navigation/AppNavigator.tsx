@@ -1,7 +1,7 @@
 import {errorMessage} from '../types';
-import React, {useEffect, useRef, useState} from 'react';
-import {Animated, Pressable, StyleSheet, View} from 'react-native';
-import {NavigationContainer, useNavigation} from '@react-navigation/native';
+import React, {useState} from 'react';
+import {StyleSheet, View} from 'react-native';
+import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {
   createBottomTabNavigator,
@@ -26,11 +26,9 @@ import OnboardingScreen from '../screens/OnboardingScreen';
 import OrderDetailsScreen from '../screens/OrderDetailsScreen';
 import OrdersScreen from '../screens/OrdersScreen';
 import ReadyOrdersScreen from '../screens/ReadyOrdersScreen';
-import BackIcon from '../components/BackIcon';
 import {ManageMenu} from '../components/ManageDrawer';
 import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
-import {radius} from '../theme/layout';
 import {text, face} from '../theme/type';
 import ShopTabBar from './ShopTabBar';
 import {showNotice} from '../utils/confirm';
@@ -39,14 +37,6 @@ const styles = StyleSheet.create({
   leading: {
     alignItems: 'center',
     flexDirection: 'row',
-  },
-  back: {
-    alignItems: 'center',
-    borderRadius: radius,
-    justifyContent: 'center',
-    marginRight: 8,
-    minHeight: 36,
-    minWidth: 36,
   },
 });
 
@@ -57,67 +47,10 @@ function renderShopTabBar(props: BottomTabBarProps) {
   return <ShopTabBar {...props} />;
 }
 
-function HeaderBackButton() {
-  const navigation = useNavigation();
-  const slide = useRef(new Animated.Value(-8)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(slide, {
-        toValue: 0,
-        duration: 220,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 220,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [opacity, slide]);
-
-  if (!navigation.canGoBack()) {
-    return null;
-  }
-
-  const pressIn = () => {
-    Animated.timing(slide, {
-      toValue: -4,
-      duration: 120,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const pressOut = () => {
-    Animated.timing(slide, {
-      toValue: 0,
-      duration: 160,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel="Back"
-      onPress={() => navigation.goBack()}
-      onPressIn={pressIn}
-      onPressOut={pressOut}
-      hitSlop={6}
-      style={styles.back}>
-      <Animated.View style={{opacity, transform: [{translateX: slide}]}}>
-        <BackIcon color={colors.ink} />
-      </Animated.View>
-    </Pressable>
-  );
-}
-
 function HeaderLeading() {
   return (
     <View style={styles.leading}>
       <ManageMenu color={colors.ink} />
-      <HeaderBackButton />
     </View>
   );
 }
@@ -277,7 +210,9 @@ function ManageStack() {
 function MainTabs() {
   const {t} = useLanguage();
   return (
-    <Tab.Navigator tabBar={renderShopTabBar} screenOptions={{headerShown: false}}>
+    <Tab.Navigator
+      tabBar={renderShopTabBar}
+      screenOptions={{headerShown: false, freezeOnBlur: true, lazy: true}}>
       <Tab.Screen name="Dashboard" component={DeskStack} options={{title: t('Home')}} />
       <Tab.Screen name="Calendar" component={CalendarStack} options={{title: t('Calendar')}} />
       <Tab.Screen

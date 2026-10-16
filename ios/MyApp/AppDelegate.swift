@@ -16,20 +16,32 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   ) -> Bool {
     let delegate = ReactNativeDelegate()
     let factory = RCTReactNativeFactory(delegate: delegate)
-    delegate.dependencyProvider = RCTAppDependencyProvider()
+    delegate.dependencyProvider = ShopDependencyProvider()
 
     reactNativeDelegate = delegate
     reactNativeFactory = factory
 
-    window = UIWindow(frame: UIScreen.main.bounds)
-
-    factory.startReactNative(
-      withModuleName: "MyApp",
-      in: window,
-      launchOptions: launchOptions
-    )
-
     return true
+  }
+
+  func application(
+    _ application: UIApplication,
+    configurationForConnecting connectingSceneSession: UISceneSession,
+    options: UIScene.ConnectionOptions
+  ) -> UISceneConfiguration {
+    let configuration = UISceneConfiguration(
+      name: "Default Configuration",
+      sessionRole: connectingSceneSession.role
+    )
+    configuration.delegateClass = SceneDelegate.self
+    return configuration
+  }
+}
+
+/** Codegen still lists the RN sample module; this shop app does not ship it. */
+final class ShopDependencyProvider: RCTAppDependencyProvider {
+  override func unstableModulesRequiringMainQueueSetup() -> [String] {
+    super.unstableModulesRequiringMainQueueSetup().filter { $0 != "SampleTurboModule" }
   }
 }
 

@@ -12,6 +12,8 @@
 		32E8088C28FC8EA36332533C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		A31C9E4B2E9B4C1A00F1D802 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A31C9E4A2E9B4C1A00F1D802 /* SceneDelegate.swift */; };
+		A31C9E4D2E9B4C1A00F1D802 /* NotifeeLoad.m in Sources */ = {isa = PBXBuildFile; fileRef = A31C9E4C2E9B4C1A00F1D802 /* NotifeeLoad.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +26,8 @@
 		5DCACB8F33CDC322A6C60F78 /* libPods-MyApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-MyApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = MyApp/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = MyApp/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		A31C9E4A2E9B4C1A00F1D802 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SceneDelegate.swift; path = MyApp/SceneDelegate.swift; sourceTree = "<group>"; };
+		A31C9E4C2E9B4C1A00F1D802 /* NotifeeLoad.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NotifeeLoad.m; path = MyApp/NotifeeLoad.m; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -44,6 +48,8 @@
 			children = (
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
+				A31C9E4A2E9B4C1A00F1D802 /* SceneDelegate.swift */,
+				A31C9E4C2E9B4C1A00F1D802 /* NotifeeLoad.m */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
@@ -247,6 +253,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
+				A31C9E4B2E9B4C1A00F1D802 /* SceneDelegate.swift in Sources */,
+				A31C9E4D2E9B4C1A00F1D802 /* NotifeeLoad.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

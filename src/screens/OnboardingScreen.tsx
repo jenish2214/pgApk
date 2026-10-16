@@ -1,6 +1,8 @@
 import React, {useRef, useState} from 'react';
 import {
-  Animated,
+  Image,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Pressable,
   ScrollView,
   StatusBar,
@@ -8,14 +10,14 @@ import {
   Text,
   useWindowDimensions,
   View,
+  type ScrollViewInstance,
 } from 'react-native';
-import type {ScrollViewInstance} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import Screen from '../components/Screen';
 import {useLanguage} from '../i18n/LanguageProvider';
 import {colors} from '../theme/colors';
 import {radius} from '../theme/layout';
-import {face} from '../theme/type';
+import {spacing} from '../theme/spacing';
+import {face, text} from '../theme/type';
 
 const PAGES = [
   {
@@ -48,17 +50,11 @@ export default function OnboardingScreen({onEnter}: {onEnter: () => void}) {
   const {t} = useLanguage();
   const {width, height} = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const scrollX = useRef(new Animated.Value(0)).current;
   const pagerRef = useRef<ScrollViewInstance>(null);
-  const [pagerHeight, setPagerHeight] = useState(0);
   const [page, setPage] = useState(0);
-  const isWide = width >= 700;
-  const frameWidth = Math.min(width - 48, isWide ? 440 : width - 48);
-  const frameHeight = Math.max(
-    210,
-    Math.min(pagerHeight ? pagerHeight * 0.56 : height * 0.36, frameWidth * 1.05),
-  );
-  const titleSize = Math.min(40, Math.max(28, width * 0.082));
+  const frameWidth = Math.min(width - 48, 440);
+  const frameHeight = Math.max(200, Math.min(height * 0.34, frameWidth * 0.95));
+  const lastPage = page === PAGES.length - 1;
 
   const goToPage = (index: number) => {
     const next = Math.max(0, Math.min(index, PAGES.length - 1));
@@ -66,20 +62,17 @@ export default function OnboardingScreen({onEnter}: {onEnter: () => void}) {
     pagerRef.current?.scrollTo({x: next * width, animated: true});
   };
 
-  const onSwipe = (offsetX: number) => {
-    const next = Math.round(offsetX / width);
-    if (next >= 0 && next < PAGES.length) {
+  const onSwipe = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const next = Math.round(event.nativeEvent.contentOffset.x / width);
+    if (next >= 0 && next < PAGES.length && next !== page) {
       setPage(next);
     }
   };
 
-  const lastPage = page === PAGES.length - 1;
-
   return (
-    <Screen>
     <View style={styles.root}>
       <StatusBar barStyle="light-content" />
-      <View style={[styles.brandWrap, {paddingTop: insets.top + 12}]}>
+      <View style={[styles.brandWrap, {paddingTop: insets.top + spacing.md}]}>
         <View style={styles.brand}>
           <View style={styles.mark}>
             <Text style={styles.markText}>P</Text>
@@ -91,112 +84,60 @@ export default function OnboardingScreen({onEnter}: {onEnter: () => void}) {
         </View>
       </View>
 
-      <View
-        style={styles.pagerSlot}
-        onLayout={event => setPagerHeight(event.nativeEvent.layout.height)}>
-        {pagerHeight > 0 ? (
-          <Animated.ScrollView
-            ref={pagerRef}
-            horizontal
-            pagingEnabled
-            bounces={false}
-            showsHorizontalScrollIndicator={false}
-            scrollEventThrottle={16}
-            onScroll={Animated.event(
-              [{nativeEvent: {contentOffset: {x: scrollX}}}],
-              {useNativeDriver: false},
-            )}
-            onMomentumScrollEnd={event => onSwipe(event.nativeEvent.contentOffset.x)}>
-            {PAGES.map((item, index) => {
-              const inputRange = [
-                (index - 1) * width,
-                index * width,
-                (index + 1) * width,
-              ];
-              const shift = scrollX.interpolate({
-                inputRange,
-                outputRange: [36, 0, -36],
-                extrapolate: 'clamp',
-              });
-              const opacity = scrollX.interpolate({
-                inputRange,
-                outputRange: [0.35, 1, 0.35],
-                extrapolate: 'clamp',
-              });
-              return (
-                <ScrollView
-                  key={item.key}
-                  style={{width, height: pagerHeight}}
-                  contentContainerStyle={styles.page}
-                  showsVerticalScrollIndicator={false}
-                  bounces={false}>
-                  <View style={[styles.frame, {width: frameWidth, height: frameHeight}]}>
-                    <Animated.Image
-                      source={item.image}
-                      resizeMode="cover"
-                      style={[styles.photo, {transform: [{translateX: shift}, {scale: 1.08}]}]}
-                    />
-                    <View style={styles.badge}>
-                      <Text style={styles.badgeText}>{t(item.badge)}</Text>
-                    </View>
-                  </View>
-                  <Animated.View style={[styles.copy, {opacity}]}>
-                    <Text style={styles.kicker}>{t(item.kicker)}</Text>
-                    <Text
-                      style={[
-                        styles.title,
-                        {fontSize: titleSize, lineHeight: Math.round(titleSize * 1.12)},
-                      ]}>
-                      {t(item.title)}
-                    </Text>
-                    <Text style={styles.body}>{t(item.body)}</Text>
-                  </Animated.View>
-                </ScrollView>
-              );
-            })}
-          </Animated.ScrollView>
-        ) : null}
-      </View>
+      <ScrollView
+        ref={pagerRef}
+        horizontal
+        pagingEnabled
+        bounces={false}
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={onSwipe}
+        scrollEventThrottle={16}
+        style={styles.pager}>
+        {PAGES.map(item => (
+          <View key={item.key} style={[styles.page, {width}]}>
+            <View style={[styles.frame, {width: frameWidth, height: frameHeight}]}>
+              <Image source={item.image} resizeMode="cover" style={styles.photo} />
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{t(item.badge)}</Text>
+              </View>
+            </View>
+            <Text style={styles.kicker}>{t(item.kicker)}</Text>
+            <Text style={styles.title}>{t(item.title)}</Text>
+            <Text style={styles.body}>{t(item.body)}</Text>
+          </View>
+        ))}
+      </ScrollView>
 
-      <View style={[styles.footer, {paddingBottom: Math.max(insets.bottom, 16)}]}>
+      <View style={[styles.footer, {paddingBottom: Math.max(insets.bottom, spacing.lg)}]}>
         <View style={styles.dots}>
-          {PAGES.map((item, index) => {
-            const inputRange = [
-              (index - 1) * width,
-              index * width,
-              (index + 1) * width,
-            ];
-            const dotWidth = scrollX.interpolate({
-              inputRange,
-              outputRange: [8, 22, 8],
-              extrapolate: 'clamp',
-            });
-            return (
-              <Pressable
-                key={item.key}
-                accessibilityRole="button"
-                accessibilityLabel={`Onboarding page ${index + 1}`}
-                onPress={() => goToPage(index)}
-                hitSlop={8}>
-                <Animated.View style={[styles.dot, {width: dotWidth}]} />
-              </Pressable>
-            );
-          })}
+          {PAGES.map((item, index) => (
+            <Pressable
+              key={item.key}
+              accessibilityRole="button"
+              accessibilityLabel={`Onboarding page ${index + 1}`}
+              onPress={() => goToPage(index)}
+              hitSlop={8}
+              style={[styles.dot, index === page && styles.dotOn]}
+            />
+          ))}
         </View>
-        <Text style={styles.step}>
-          {t('Step {step} of {total}', {step: page + 1, total: PAGES.length})}
-        </Text>
         <Pressable
           accessibilityRole="button"
-          onPress={() => (lastPage ? onEnter() : goToPage(page + 1))}
-          style={({pressed}) => [styles.enter, pressed && styles.pressed]}>
-          <Text style={styles.enterText}>
-            {lastPage ? t('Enter Pragati Gold') : t('Next')}
-          </Text>
+          onPress={onEnter}
+          style={({pressed}) => [styles.start, pressed && styles.pressed]}>
+          <Text style={styles.startText}>{t('Start')}</Text>
         </Pressable>
+        {lastPage ? null : (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => goToPage(page + 1)}
+            hitSlop={8}
+            style={({pressed}) => [styles.next, pressed && styles.pressed]}>
+            <Text style={styles.nextText}>{t('Next')}</Text>
+          </Pressable>
+        )}
       </View>
     </View>
-    </Screen>
   );
 }
 
@@ -207,7 +148,7 @@ const styles = StyleSheet.create({
   },
   brandWrap: {
     alignItems: 'center',
-    paddingBottom: 8,
+    paddingBottom: spacing.sm,
   },
   brand: {
     alignItems: 'center',
@@ -220,7 +161,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     height: 44,
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: spacing.md,
     width: 44,
   },
   markText: {
@@ -235,22 +176,21 @@ const styles = StyleSheet.create({
   },
   brandLine: {
     color: colors.goldSoft,
-    fontSize: 11,
+    fontSize: text.tiny,
     letterSpacing: 1.6,
     marginTop: 2,
   },
-  pagerSlot: {
+  pager: {
     flex: 1,
   },
   page: {
     alignItems: 'center',
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 8,
+    paddingHorizontal: spacing.xl,
   },
   frame: {
-    borderColor: 'rgba(37, 99, 235, 0.45)',
+    borderColor: 'rgba(255,255,255,0.28)',
     borderTopLeftRadius: 999,
     borderTopRightRadius: 999,
     borderWidth: 1,
@@ -264,85 +204,93 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.gold,
     borderRadius: 36,
-    bottom: 16,
+    bottom: spacing.md,
     height: 72,
     justifyContent: 'center',
     position: 'absolute',
-    right: 12,
+    right: spacing.md,
     width: 72,
   },
   badgeText: {
     color: colors.cream,
-    fontSize: 12,
+    fontSize: text.small,
     fontFamily: face.display, fontWeight: '400',
     letterSpacing: 0.6,
     textAlign: 'center',
   },
-  copy: {
-    alignItems: 'center',
-    marginTop: 22,
-    maxWidth: 460,
-    width: '100%',
-  },
   kicker: {
     color: colors.cream,
-    fontSize: 12,
+    fontSize: text.small,
     fontFamily: face.display, fontWeight: '400',
     letterSpacing: 1.5,
+    marginTop: spacing.lg,
     textAlign: 'center',
   },
   title: {
     color: colors.cream,
     fontFamily: face.display,
-    marginTop: 10,
+    fontSize: text.display,
+    lineHeight: text.display + 8,
+    marginTop: spacing.sm,
     textAlign: 'center',
   },
   body: {
     color: colors.goldSoft,
-    fontSize: 15,
-    lineHeight: 22,
-    marginTop: 12,
+    fontSize: text.body,
+    lineHeight: text.body + 7,
+    marginTop: spacing.md,
+    maxWidth: 460,
     textAlign: 'center',
   },
   footer: {
-    paddingHorizontal: 24,
-    paddingTop: 8,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.sm,
   },
   dots: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.sm,
   },
   dot: {
-    backgroundColor: colors.gold,
+    backgroundColor: 'rgba(255,255,255,0.35)',
     borderRadius: 999,
     height: 8,
     marginHorizontal: 4,
+    width: 8,
   },
-  step: {
-    color: colors.goldSoft,
-    fontSize: 13,
-    fontFamily: face.display, fontWeight: '400',
-    letterSpacing: 0.6,
-    marginBottom: 12,
-    textAlign: 'center',
+  dotOn: {
+    backgroundColor: colors.gold,
+    width: 22,
   },
-  enter: {
+  start: {
     alignItems: 'center',
     alignSelf: 'center',
     backgroundColor: colors.gold,
     borderRadius: radius,
+    minHeight: 56,
+    justifyContent: 'center',
     maxWidth: 520,
-    paddingVertical: 16,
+    paddingVertical: spacing.md,
     width: '100%',
+  },
+  next: {
+    alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
   },
   pressed: {
     opacity: 0.86,
   },
-  enterText: {
+  startText: {
     color: colors.cream,
-    fontSize: 17,
+    fontSize: text.lead,
     fontFamily: face.display, fontWeight: '400',
+  },
+  nextText: {
+    color: colors.cream,
+    fontSize: text.section,
+    fontFamily: face.important, fontWeight: '400',
   },
 });
